@@ -13,7 +13,7 @@
   <img alt="Compose for TV" src="https://img.shields.io/badge/Jetpack%20Compose-for%20TV-4285F4?logo=jetpackcompose&logoColor=white">
   <img alt="Player" src="https://img.shields.io/badge/player-libmpv%20%2B%20FFmpeg-FB8C00">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-blue">
-  <img alt="Built with AI" src="https://img.shields.io/badge/built%20with-AI-8A2BE2">
+  <img alt="Built with the help of AI" src="https://img.shields.io/badge/built%20with-the%20help%20of%20AI-8A2BE2">
 </p>
 
 <p align="center">
@@ -60,8 +60,9 @@ targets **Android TV only** (leanback launcher, D-pad-first UI).
 ### 🧭 Browse
 - **Live TV**, **Movies**, **Series**, **Downloads**, and a full **EPG Guide**.
 - Folder rail with section-specific **Favorites** and **History** — it expands on focus to show **full
-  category names**. Inline per-folder search and a cross-section **global search** — TV-style: search
-  bars take focus like any control and only open the keyboard on **OK**.
+  category names**, with a **category search box** at the top to filter hundreds of groups by name.
+  Inline per-folder search and a cross-section **global search** too — all TV-style: search bars take
+  focus like any control and only open the keyboard on **OK**.
 - **Sort toggle** per section: your **playlist's own order** or **A–Z** (Live TV defaults to playlist order).
 - **Customize everything (per profile):** hide, rename & reorder categories; hide & rename channels —
   and it all survives re-syncs.

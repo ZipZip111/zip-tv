@@ -46,6 +46,7 @@ import androidx.compose.ui.zIndex
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import tv.own.owntv.ui.components.OwnTVIcon
+import tv.own.owntv.ui.components.SearchBar
 import tv.own.owntv.ui.theme.Dimens
 import tv.own.owntv.ui.theme.OwnTVTheme
 
@@ -75,6 +76,18 @@ fun CategoryRail(
 ) {
     val colors = OwnTVTheme.colors
     var hasFocus by remember { mutableStateOf(false) }
+    // Folder search (for big libraries). Filters the rail by name but keeps each folder's ORIGINAL
+    // index, so selection highlighting and onSelect still map correctly. Reset when the rail loses
+    // focus, so it's fresh every time you open it.
+    var query by remember { mutableStateOf("") }
+    // True while the search box itself holds focus — used to suppress the selected-category highlight so
+    // focus reads in one place (search) on entry, instead of search + the lit-up current category.
+    var searchFocused by remember { mutableStateOf(false) }
+    val visible = remember(categories, query) {
+        val q = query.trim()
+        if (q.isEmpty()) categories.indices.toList()
+        else categories.indices.filter { categories[it].fullName.contains(q, ignoreCase = true) }
+    }
     val width by animateDpAsState(
         targetValue = if (hasFocus) Dimens.RailWidthExpanded else Dimens.RailWidth,
         animationSpec = tween(150),
@@ -83,6 +96,7 @@ fun CategoryRail(
 
     val listState = rememberLazyListState()
     val selectedFocus = remember { FocusRequester() }
+    val searchFocus = remember { FocusRequester() }
     val scope = rememberCoroutineScope()
     // Keep the selected category in view when the selection changes while the rail isn't focused
     // (initial load, restored state). While the user D-pads inside, focus handles scrolling.
@@ -110,22 +124,57 @@ fun CategoryRail(
                     // rejected (the focus transaction is still in progress).
                     val entered = it.hasFocus && !hasFocus
                     hasFocus = it.hasFocus
-                    if (it.hasFocus) onFocused()
-                    if (entered) scope.launch { runCatching { selectedFocus.requestFocus() } }
+                    if (it.hasFocus) onFocused() else { query = ""; searchFocused = false } // reset on leaving
+                    // Entering the rail lands on the search box (scrolled to the top) so you can filter
+                    // categories straight away; Down drops into the list.
+                    if (entered) scope.launch {
+                        runCatching { listState.scrollToItem(0) }
+                        runCatching { searchFocus.requestFocus() }
+                    }
                 }
                 .focusGroup(),
             contentPadding = PaddingValues(vertical = Dimens.GapLarge, horizontal = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Dimens.GapSmall),
         ) {
-            items(count = categories.size) { index ->
+            // Category-search field, only while the rail is expanded (focused). Entering the rail lands
+            // here; Down drops into the list, and the filter clears when the rail loses focus.
+            if (hasFocus) {
+                item(key = "__rail_search__") {
+                    SearchBar(
+                        query = query,
+                        onQueryChange = { query = it },
+                        placeholder = "Search categories…",
+                        modifier = Modifier
+                            .focusRequester(searchFocus)
+                            .onFocusChanged { searchFocused = it.hasFocus }
+                            .fillMaxWidth()
+                            .padding(bottom = 4.dp),
+                    )
+                }
+            }
+            items(count = visible.size, key = { visible[it] }) { i ->
+                val index = visible[i]
                 RailPill(
                     category = categories[index],
-                    selected = index == selectedIndex,
+                    // Highlight the current category only while the rail is the focused panel (and not
+                    // while the search box has focus) — so the highlight follows focus instead of always
+                    // lighting up when you're on the sidebar/content. The header still shows the category.
+                    selected = index == selectedIndex && hasFocus && !searchFocused,
                     expanded = hasFocus,
                     onClick = { onSelect(index) },
                     modifier = if (index == selectedIndex) Modifier.focusRequester(selectedFocus) else Modifier,
                 )
+            }
+            if (hasFocus && visible.isEmpty()) {
+                item {
+                    Text(
+                        "No categories match",
+                        color = colors.textSecondary,
+                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.padding(12.dp),
+                    )
+                }
             }
         }
     }

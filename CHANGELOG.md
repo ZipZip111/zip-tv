@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.2.1 — 2026-06-14
+
+- **Search your categories** — the category rail (Live TV / Movies / Series) now has a **search box**
+  at the top. Opening the rail lands right on it, so you can **type to filter** hundreds of categories
+  by name and jump straight to the one you want instead of scrolling; **Down** drops into the list. The
+  filter clears when you leave the rail.
+
 ## v2.2.0 — 2026-06-14
 
 - **Multiple EPG sources** — EPG is now its own thing: **Settings → EPG Sources** lets you add any
