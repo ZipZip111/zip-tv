@@ -27,7 +27,7 @@ android {
         // than any published release and the in-app updater never offers an "update" while developing.
         versionName = System.getenv("VERSION_NAME") ?: "2.0.0"
 
-        buildConfigField("String", "GITHUB_REPO", "\"${tv.own.owntv.ProductConfig.GITHUB_REPO}\"")
+        buildConfigField("String", "GITHUB_REPO", "\"ZipZip111/zip-tv\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
