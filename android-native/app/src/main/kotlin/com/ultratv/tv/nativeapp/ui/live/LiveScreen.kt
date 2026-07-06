@@ -322,7 +322,10 @@ private fun LiveScreenWide(onPlay: (url: String, title: String) -> Unit, vm: Liv
                     if (isLocked) pinPrompt = active
                     else vm.resolveAndPlay(active, onPlay)
                 },
-                onPlayCatchup = { url, title -> onPlay(url, title) },
+                onPlayCatchup = { url, _ ->
+                    vm.registerCatchupStream(active, url)
+                    onPlay(url, active.name)
+                },
             )
         }
     }

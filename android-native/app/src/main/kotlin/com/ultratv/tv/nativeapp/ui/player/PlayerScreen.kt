@@ -213,20 +213,29 @@ class PlayerViewModel @Inject constructor(
 
 @OptIn(androidx.media3.common.util.UnstableApi::class)
 @Composable
-fun PlayerScreen(url: String, title: String, onBack: () -> Unit, vm: PlayerViewModel = hiltViewModel()) {
+fun PlayerScreen(onBack: () -> Unit, vm: PlayerViewModel = hiltViewModel()) {
     val context = LocalContext.current
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     BackHandler { onBack() }
     val playbackItem by vm.current.collectAsState()
+    val streamUrl = playbackItem?.streamUrl.orEmpty()
+    val streamTitle = playbackItem?.title.orEmpty()
     val isLive = playbackItem?.kind == "LIVE"
-    var currentUrl by remember { mutableStateOf(url) }
-    var currentTitle by remember { mutableStateOf(title) }
     var tracksOpen by remember { mutableStateOf(false) }
     var drawerOpen by remember { mutableStateOf(false) }
     var displayMenu by remember { mutableStateOf(false) }
     var aspectMode by remember { mutableStateOf(AspectMode.Fit) }
     var playbackSpeed by remember { mutableStateOf(1.0f) }
     val S = com.ultratv.tv.nativeapp.i18n.LocalStrings.current
+
+    if (playbackItem == null || streamUrl.isBlank()) {
+        LaunchedEffect(Unit) {
+            com.ultratv.tv.nativeapp.ui.common.Toaster.err("Нет потока для воспроизведения")
+            onBack()
+        }
+        Box(Modifier.fillMaxSize().background(Color.Black))
+        return
+    }
 
     // Load prefs off the main thread. runBlocking here blocked the main thread
     // on a DataStore read during composition (ANR risk). produceState starts
@@ -331,24 +340,26 @@ fun PlayerScreen(url: String, title: String, onBack: () -> Unit, vm: PlayerViewM
                 }
                 override fun onVideoSizeChanged(videoSize: androidx.media3.common.VideoSize) {
                     if (!playbackPrefs.autoFrameRate) return
-                    val act = (context as? android.app.Activity) ?: return
-                    val fmt = currentTracks.groups
-                        .firstOrNull { it.type == androidx.media3.common.C.TRACK_TYPE_VIDEO }
-                        ?.let { g -> (0 until g.length).firstOrNull { g.isTrackSelected(it) }?.let { g.getTrackFormat(it) } }
-                    val fps = fmt?.frameRate ?: return
-                    if (fps <= 0f) return
-                    // Pick the display mode whose refresh is the closest integer
-                    // multiple of fps (so 24 fps → 24/48/72 Hz, 50 fps → 50/100 Hz).
-                    val display = act.windowManager.defaultDisplay ?: return
-                    val target = display.supportedModes.minByOrNull { m ->
-                        val multiple = (m.refreshRate / fps).coerceAtLeast(1f)
-                        kotlin.math.abs(m.refreshRate - fps * kotlin.math.round(multiple))
-                    } ?: return
-                    val lp = act.window.attributes
-                    if (lp.preferredDisplayModeId != target.modeId) {
-                        lp.preferredDisplayModeId = target.modeId
-                        act.window.attributes = lp
-                        com.ultratv.tv.nativeapp.RemoteLog.debug("player", "switched display to ${target.refreshRate}Hz for ${fps}fps")
+                    runCatching {
+                        val act = (context as? android.app.Activity) ?: return@runCatching
+                        val fmt = currentTracks.groups
+                            .firstOrNull { it.type == androidx.media3.common.C.TRACK_TYPE_VIDEO }
+                            ?.let { g -> (0 until g.length).firstOrNull { g.isTrackSelected(it) }?.let { g.getTrackFormat(it) } }
+                        val fps = fmt?.frameRate ?: return@runCatching
+                        if (fps <= 0f) return@runCatching
+                        val display = act.windowManager.defaultDisplay ?: return@runCatching
+                        val modes = display.supportedModes ?: return@runCatching
+                        if (modes.isEmpty()) return@runCatching
+                        val target = modes.minByOrNull { m ->
+                            val multiple = (m.refreshRate / fps).coerceAtLeast(1f)
+                            kotlin.math.abs(m.refreshRate - fps * kotlin.math.round(multiple))
+                        } ?: return@runCatching
+                        val lp = act.window.attributes
+                        if (lp.preferredDisplayModeId != target.modeId) {
+                            lp.preferredDisplayModeId = target.modeId
+                            act.window.attributes = lp
+                            com.ultratv.tv.nativeapp.RemoteLog.debug("player", "switched display to ${target.refreshRate}Hz for ${fps}fps")
+                        }
                     }
                 }
 
@@ -388,10 +399,17 @@ fun PlayerScreen(url: String, title: String, onBack: () -> Unit, vm: PlayerViewM
         com.ultratv.tv.nativeapp.ui.common.Toaster.show(S.sleepReached)
         onBack()
     }
-    LaunchedEffect(currentUrl) {
-        if (currentUrl.isNotBlank()) {
-            player.setMediaItem(MediaItem.fromUri(currentUrl))
-            player.prepare()
+    LaunchedEffect(streamUrl) {
+        if (streamUrl.isNotBlank()) {
+            runCatching {
+                player.setMediaItem(MediaItem.fromUri(streamUrl))
+                player.prepare()
+            }.onFailure {
+                com.ultratv.tv.nativeapp.ui.common.Toaster.err("Неверный адрес потока")
+                com.ultratv.tv.nativeapp.RemoteLog.error("player", "bad uri: ${it.message}")
+                onBack()
+                return@LaunchedEffect
+            }
             // Seek to last persisted position if VOD/episode has one. Awaits the
             // DB read so the seek uses the real value (was racing before).
             val resume = vm.prepareResume()
@@ -438,21 +456,11 @@ fun PlayerScreen(url: String, title: String, onBack: () -> Unit, vm: PlayerViewM
                 if (!isLive || ev.type != KeyEventType.KeyDown) return@onKeyEvent false
                 when (ev.key) {
                     Key.DirectionUp -> {
-                        scope.launch {
-                            vm.zap(forward = false)?.let {
-                                currentUrl = it
-                                currentTitle = vm.current.value?.title ?: currentTitle
-                            }
-                        }
+                        scope.launch { vm.zap(forward = false) }
                         true
                     }
                     Key.DirectionDown -> {
-                        scope.launch {
-                            vm.zap(forward = true)?.let {
-                                currentUrl = it
-                                currentTitle = vm.current.value?.title ?: currentTitle
-                            }
-                        }
+                        scope.launch { vm.zap(forward = true) }
                         true
                     }
                     Key.Enter, Key.DirectionCenter -> {
@@ -557,14 +565,14 @@ fun PlayerScreen(url: String, title: String, onBack: () -> Unit, vm: PlayerViewM
 
         Row(Modifier.align(Alignment.TopStart).padding(24.dp)) {
             Column {
-                Text(currentTitle, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text(streamTitle, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 if (isLive) {
                     Text(
                         "▲ ▼ to zap channels",
                         color = Color.White.copy(alpha = 0.55f), fontSize = 11.sp,
                     )
                 }
-                Text(currentUrl.substringBefore('?').takeLast(60), color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
+                Text(streamUrl.substringBefore('?').takeLast(60), color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
             }
         }
         FlowRow(
@@ -636,8 +644,8 @@ fun PlayerScreen(url: String, title: String, onBack: () -> Unit, vm: PlayerViewM
             Button(onClick = {
                 runCatching {
                     val intent = Intent(Intent.ACTION_VIEW).apply {
-                        setDataAndType(Uri.parse(url), "video/*")
-                        putExtra("title", title)
+                        setDataAndType(Uri.parse(streamUrl), "video/*")
+                        putExtra("title", streamTitle)
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK
                     }
                     context.startActivity(Intent.createChooser(intent, S.recordingsOpenWith))
@@ -678,10 +686,7 @@ fun PlayerScreen(url: String, title: String, onBack: () -> Unit, vm: PlayerViewM
                 vm = vm,
                 onPick = { ch ->
                     scope.launch {
-                        vm.zapTo(ch)?.let {
-                            currentUrl = it
-                            currentTitle = vm.current.value?.title ?: currentTitle
-                        }
+                        vm.zapTo(ch)
                         drawerOpen = false
                     }
                 },

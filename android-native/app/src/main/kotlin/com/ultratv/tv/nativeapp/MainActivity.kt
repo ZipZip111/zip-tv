@@ -84,7 +84,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, true)
         RemoteLog.info("activity", "onCreate restoredState=${savedInstanceState != null}")
-        setContent { Root() }
+        setContent { Root(playback = playback) }
         kickoffStartupTasks()
         // Auto-update flow: query GitHub Releases on launch and, if a newer
         // version is found, download + fire the system install Intent without
@@ -176,7 +176,10 @@ class MainActivity : ComponentActivity() {
 
 @androidx.tv.material3.ExperimentalTvMaterial3Api
 @Composable
-private fun Root(vm: AppViewModel = hiltViewModel()) {
+private fun Root(
+    playback: PlaybackContext,
+    vm: AppViewModel = hiltViewModel(),
+) {
     val prefs by vm.prefs.collectAsState()
     val lang = com.ultratv.tv.nativeapp.i18n.AppLang.fromCode(prefs.language)
     val strings = com.ultratv.tv.nativeapp.i18n.stringsFor(lang)
@@ -189,14 +192,14 @@ private fun Root(vm: AppViewModel = hiltViewModel()) {
         androidx.compose.ui.platform.LocalLayoutDirection provides direction,
     ) {
         UltraTvTheme(theme = prefs.theme) {
-            UltraTvAppRoot(prefs.sidebarPosition)
+            UltraTvAppRoot(prefs.sidebarPosition, playback)
         }
     }
 }
 
 @androidx.tv.material3.ExperimentalTvMaterial3Api
 @Composable
-private fun UltraTvAppRoot(sidebarPosition: SidebarPosition) {
+private fun UltraTvAppRoot(sidebarPosition: SidebarPosition, playback: PlaybackContext) {
     val nav = rememberNavController()
     val form = rememberFormFactor()
     val navRoute = nav.currentBackStackEntryAsState().value?.destination?.route.orEmpty()
@@ -211,7 +214,7 @@ private fun UltraTvAppRoot(sidebarPosition: SidebarPosition) {
     val pending by StartupNav.pending.collectAsState()
     LaunchedEffect(pending) {
         val p = pending ?: return@LaunchedEffect
-        nav.navigate(Routes.player(p.url, p.title))
+        nav.navigate(Routes.PLAYER)
         StartupNav.pending.value = null
     }
 
@@ -225,7 +228,7 @@ private fun UltraTvAppRoot(sidebarPosition: SidebarPosition) {
                 Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background),
-            ) { NavGraph(nav) }
+            ) { NavGraph(nav, playback) }
             useBottomBar -> Column(Modifier.fillMaxSize()) {
                 com.ultratv.tv.nativeapp.ui.common.SyncStatusBanner()
                 Box(
@@ -233,7 +236,7 @@ private fun UltraTvAppRoot(sidebarPosition: SidebarPosition) {
                         .weight(1f)
                         .background(MaterialTheme.colorScheme.background)
                         .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp)),
-                ) { NavGraph(nav) }
+                ) { NavGraph(nav, playback) }
                 BottomBarNav(navController = nav)
             }
             useTopBar -> Column(Modifier.fillMaxSize()) {
@@ -244,7 +247,7 @@ private fun UltraTvAppRoot(sidebarPosition: SidebarPosition) {
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.background)
                         .padding(PaddingValues(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 16.dp)),
-                ) { NavGraph(nav) }
+                ) { NavGraph(nav, playback) }
             }
             else -> Column(Modifier.fillMaxSize()) {
                 com.ultratv.tv.nativeapp.ui.common.SyncStatusBanner()
@@ -255,7 +258,7 @@ private fun UltraTvAppRoot(sidebarPosition: SidebarPosition) {
                             .fillMaxSize()
                             .background(MaterialTheme.colorScheme.background)
                             .padding(PaddingValues(start = 12.dp, end = 24.dp, top = 24.dp, bottom = 24.dp)),
-                    ) { NavGraph(nav) }
+                    ) { NavGraph(nav, playback) }
                 }
             }
             }
@@ -272,7 +275,20 @@ private fun UltraTvAppRoot(sidebarPosition: SidebarPosition) {
 
 @androidx.tv.material3.ExperimentalTvMaterial3Api
 @Composable
-private fun NavGraph(nav: androidx.navigation.NavHostController) {
+private fun NavGraph(nav: androidx.navigation.NavHostController, playback: PlaybackContext) {
+    val openPlayer = { nav.navigate(Routes.PLAYER) }
+    fun registerLiveChannel(ch: com.ultratv.tv.nativeapp.data.db.ChannelEntity) {
+        playback.set(
+            PlaybackContext.Item(
+                providerId = ch.providerId,
+                kind = "LIVE",
+                remoteId = ch.remoteId,
+                title = ch.name,
+                poster = ch.logo,
+                streamUrl = ch.streamUrl,
+            ),
+        )
+    }
     // Ship the current route to the worker on every back-stack change. Lets us
     // see in /logs which screen the user was on right before a silent crash.
     androidx.compose.runtime.LaunchedEffect(nav) {
@@ -287,18 +303,18 @@ private fun NavGraph(nav: androidx.navigation.NavHostController) {
                 onGoMovies = { nav.navigate(Routes.MOVIES) },
                 onGoSeries = { nav.navigate(Routes.SERIES) },
                 onGoSettings = { nav.navigate(Routes.SETTINGS) },
-                onPlay = { url, title -> nav.navigate(Routes.player(url, title)) },
+                onPlay = { _, _ -> openPlayer() },
                 onOpenMovie = { id -> nav.navigate(Routes.movieDetail(id)) },
                 onOpenSeries = { id -> nav.navigate(Routes.seriesDetail(id)) },
             )
         }
         composable(Routes.LIVE) {
-            LiveScreen(onPlay = { url, title -> nav.navigate(Routes.player(url, title)) })
+            LiveScreen(onPlay = { _, _ -> openPlayer() })
         }
         composable(Routes.MOVIES) {
             MoviesScreen(
                 onOpen = { id -> nav.navigate(Routes.movieDetail(id)) },
-                onPlayLive = { url, title -> nav.navigate(Routes.player(url, title)) },
+                onPlayLive = { _, _ -> openPlayer() },
             )
         }
         composable(
@@ -308,7 +324,7 @@ private fun NavGraph(nav: androidx.navigation.NavHostController) {
             val id = entry.arguments?.getLong("id") ?: -1L
             MovieDetailScreen(
                 movieId = id,
-                onPlay = { url, title -> nav.navigate(Routes.player(url, title)) },
+                onPlay = { _, _ -> openPlayer() },
             )
         }
         composable(Routes.SERIES) {
@@ -321,26 +337,53 @@ private fun NavGraph(nav: androidx.navigation.NavHostController) {
             val id = entry.arguments?.getLong("id") ?: -1L
             SeriesDetailScreen(
                 seriesId = id,
-                onPlayEpisode = { url, title -> nav.navigate(Routes.player(url, title)) },
+                onPlayEpisode = { _, _ -> openPlayer() },
             )
         }
         composable(Routes.SEARCH) {
             SearchScreen(
-                onOpenChannel = { url, title -> nav.navigate(Routes.player(url, title)) },
+                onOpenChannel = { url, title ->
+                    playback.set(
+                        PlaybackContext.Item(
+                            providerId = 0L,
+                            kind = "LIVE",
+                            remoteId = url,
+                            title = title,
+                            poster = null,
+                            streamUrl = url,
+                        ),
+                    )
+                    openPlayer()
+                },
                 onOpenMovie = { id -> nav.navigate(Routes.movieDetail(id)) },
                 onOpenSeries = { id -> nav.navigate(Routes.seriesDetail(id)) },
             )
         }
         composable(Routes.GUIDE) {
             GuideGridScreen(
-                onPlayChannel = { ch -> nav.navigate(Routes.player(ch.streamUrl, ch.name)) },
+                onPlayChannel = { ch ->
+                    registerLiveChannel(ch)
+                    openPlayer()
+                },
             )
         }
         composable("categories") { CategoriesScreen() }
         composable("locked-channels") { com.ultratv.tv.nativeapp.ui.parental.LockedChannelsScreen() }
         composable("recordings") {
             com.ultratv.tv.nativeapp.ui.recordings.RecordingsScreen(
-                onPlayLocal = { url, title -> nav.navigate(Routes.player(url, title)) },
+                onPlayLocal = { url, title ->
+                    playback.set(
+                        PlaybackContext.Item(
+                            providerId = 0L,
+                            kind = "RECORDING",
+                            remoteId = url,
+                            title = title,
+                            poster = null,
+                            streamUrl = url,
+                        ),
+                    )
+                    openPlayer()
+                },
             )
         }
         composable(Routes.FAVORITES) {
@@ -350,18 +393,8 @@ private fun NavGraph(nav: androidx.navigation.NavHostController) {
             )
         }
         composable(Routes.SETTINGS) { SettingsScreen(onNavigate = { route -> nav.navigate(route) }) }
-        composable(
-            route = Routes.PLAYER,
-            arguments = listOf(
-                navArgument("url") { type = NavType.StringType; defaultValue = "" },
-                navArgument("title") { type = NavType.StringType; defaultValue = "" },
-            ),
-        ) { entry ->
-            val rawUrl = entry.arguments?.getString("url").orEmpty()
-            val rawTitle = entry.arguments?.getString("title").orEmpty()
-            val url = java.net.URLDecoder.decode(rawUrl, "UTF-8")
-            val title = java.net.URLDecoder.decode(rawTitle, "UTF-8")
-            PlayerScreen(url = url, title = title, onBack = { nav.popBackStack() })
+        composable(Routes.PLAYER) {
+            PlayerScreen(onBack = { nav.popBackStack() })
         }
     }
 }

@@ -11,14 +11,9 @@ object Routes {
     const val GUIDE = "guide"
     const val FAVORITES = "favorites"
     const val SETTINGS = "settings"
-    // Player accepts a stream URL (URL-encoded) + title.
-    const val PLAYER = "player?url={url}&title={title}"
+    /** Stream URL lives in [PlaybackContext] — never in nav args (URLs are too long). */
+    const val PLAYER = "player"
 
     fun movieDetail(id: Long) = "movies/$id"
     fun seriesDetail(id: Long) = "series/$id"
-    fun player(url: String, title: String): String {
-        val u = java.net.URLEncoder.encode(url, "UTF-8")
-        val t = java.net.URLEncoder.encode(title, "UTF-8")
-        return "player?url=$u&title=$t"
-    }
 }

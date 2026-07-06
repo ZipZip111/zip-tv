@@ -273,6 +273,11 @@ class LiveViewModel @Inject constructor(
         }
     }
 
+    /** Catch-up / archive URL for the same live channel. */
+    fun registerCatchupStream(channel: ChannelEntity, url: String) {
+        channelPlayback.register(channel, url)
+    }
+
     init {
         // Run AFTER `channels` is initialised. viewModelScope is Main.immediate,
         // so referencing channels in an init block at the top of the class read
