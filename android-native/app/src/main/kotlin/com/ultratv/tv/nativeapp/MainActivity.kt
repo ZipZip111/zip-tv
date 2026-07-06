@@ -81,7 +81,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowCompat.setDecorFitsSystemWindows(window, true)
         RemoteLog.info("activity", "onCreate restoredState=${savedInstanceState != null}")
         setContent { Root() }
         kickoffStartupTasks()
@@ -188,15 +188,7 @@ private fun Root(vm: AppViewModel = hiltViewModel()) {
         androidx.compose.ui.platform.LocalLayoutDirection provides direction,
     ) {
         UltraTvTheme(theme = prefs.theme) {
-            Box(Modifier.fillMaxSize()) {
-                UltraTvAppRoot(prefs.sidebarPosition)
-                com.ultratv.tv.nativeapp.ui.setup.SetupOverlay()
-                if (!com.ultratv.tv.nativeapp.ProductConfig.AUTO_BOOTSTRAP_IPTV_ORG) {
-                    com.ultratv.tv.nativeapp.ui.onboarding.OnboardingWizard(
-                        onOpenSettings = { /* user can re-enter Settings via sidebar */ },
-                    )
-                }
-            }
+            UltraTvAppRoot(prefs.sidebarPosition)
         }
     }
 }
@@ -226,8 +218,8 @@ private fun UltraTvAppRoot(sidebarPosition: SidebarPosition) {
         modifier = Modifier.fillMaxSize(),
         colors = SurfaceDefaults.colors(containerColor = MaterialTheme.colorScheme.background),
     ) {
-        androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
-        when {
+        Box(Modifier.fillMaxSize()) {
+            when {
             hideChrome -> Box(
                 Modifier
                     .fillMaxSize()
@@ -265,8 +257,14 @@ private fun UltraTvAppRoot(sidebarPosition: SidebarPosition) {
                     ) { NavGraph(nav) }
                 }
             }
-        }
-        com.ultratv.tv.nativeapp.ui.common.ToasterHost()
+            }
+            com.ultratv.tv.nativeapp.ui.setup.SetupOverlay()
+            if (!com.ultratv.tv.nativeapp.ProductConfig.AUTO_BOOTSTRAP_IPTV_ORG) {
+                com.ultratv.tv.nativeapp.ui.onboarding.OnboardingWizard(
+                    onOpenSettings = { },
+                )
+            }
+            com.ultratv.tv.nativeapp.ui.common.ToasterHost()
         }
     }
 }

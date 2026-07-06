@@ -24,12 +24,15 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.tv.material3.Button
+import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.ultratv.tv.nativeapp.ProductConfig
 import com.ultratv.tv.nativeapp.bootstrap.ProductBootstrap
 import com.ultratv.tv.nativeapp.data.repo.ProviderRepository
+import com.ultratv.tv.nativeapp.ui.common.Toaster
 import com.ultratv.tv.nativeapp.ui.theme.UltraFonts
 import com.ultratv.tv.nativeapp.ui.theme.UltraTokens
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -46,7 +49,6 @@ import javax.inject.Inject
 sealed interface SetupUiState {
     data object Hidden : SetupUiState
     data class Running(val message: String) : SetupUiState
-    data class Failed(val message: String) : SetupUiState
 }
 
 @HiltViewModel
@@ -57,20 +59,18 @@ class SetupViewModel @Inject constructor(
 
     private val _message = MutableStateFlow("Подготовка…")
     private val _running = MutableStateFlow(false)
-    private val _failed = MutableStateFlow<String?>(null)
     private var started = false
 
     val state: StateFlow<SetupUiState> = combine(
         providers.observeProviders(),
         _running,
         _message,
-        _failed,
-    ) { list, running, msg, fail ->
+    ) { list, running, msg ->
         when {
-            !ProductConfig.AUTO_BOOTSTRAP_IPTV_ORG || list.isNotEmpty() -> SetupUiState.Hidden
-            fail != null -> SetupUiState.Failed(fail!!)
-            running || list.isEmpty() -> SetupUiState.Running(msg)
-            else -> SetupUiState.Hidden
+            !ProductConfig.AUTO_BOOTSTRAP_IPTV_ORG -> SetupUiState.Hidden
+            list.isNotEmpty() -> SetupUiState.Hidden
+            !running -> SetupUiState.Hidden
+            else -> SetupUiState.Running(msg)
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SetupUiState.Hidden)
 
@@ -83,13 +83,12 @@ class SetupViewModel @Inject constructor(
             when (val result = bootstrap.runIfNeeded { _message.value = it }) {
                 is ProductBootstrap.Result.Success,
                 is ProductBootstrap.Result.AlreadyConfigured,
-                -> {
-                    _running.value = false
-                    _failed.value = null
-                }
+                -> _running.value = false
                 is ProductBootstrap.Result.Failed -> {
                     _running.value = false
-                    _failed.value = result.message
+                    Toaster.err(
+                        "Не удалось настроить автоматически. Настройки → Каталог iptv-org → 🇷🇺 Россия",
+                    )
                 }
             }
         }
@@ -110,19 +109,13 @@ fun SetupOverlay(vm: SetupViewModel = hiltViewModel()) {
         is SetupUiState.Running -> FullScreenSetup(
             title = "Настраиваем ${ProductConfig.APP_DISPLAY_NAME}",
             subtitle = s.message,
-            error = false,
-        )
-        is SetupUiState.Failed -> FullScreenSetup(
-            title = "Не удалось настроить автоматически",
-            subtitle = "${s.message}\n\nОткройте Настройки → Каталог iptv-org → 🇷🇺 Россия",
-            error = true,
         )
     }
 }
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-private fun FullScreenSetup(title: String, subtitle: String, error: Boolean) {
+private fun FullScreenSetup(title: String, subtitle: String) {
     Box(
         Modifier
             .fillMaxSize()
@@ -164,20 +157,18 @@ private fun FullScreenSetup(title: String, subtitle: String, error: Boolean) {
             Spacer(Modifier.height(16.dp))
             Text(
                 subtitle,
-                color = if (error) UltraTokens.Warn else UltraTokens.Fg2,
+                color = UltraTokens.Fg2,
                 fontSize = 18.sp,
                 textAlign = TextAlign.Center,
                 lineHeight = 26.sp,
             )
-            if (!error) {
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    "iptv-org · zip-dev.ru",
-                    color = UltraTokens.Accent,
-                    fontSize = 14.sp,
-                    letterSpacing = 1.sp,
-                )
-            }
+            Spacer(Modifier.height(12.dp))
+            Text(
+                "iptv-org · zip-dev.ru",
+                color = UltraTokens.Accent,
+                fontSize = 14.sp,
+                letterSpacing = 1.sp,
+            )
         }
     }
 }

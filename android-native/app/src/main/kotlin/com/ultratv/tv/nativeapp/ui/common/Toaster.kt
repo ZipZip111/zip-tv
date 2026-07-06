@@ -5,7 +5,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,9 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
-import com.ultratv.tv.nativeapp.ui.common.safeBottomPadding
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -27,12 +24,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
- * Lightweight, app-wide toast layer. Bypasses Snackbar (it pulls in M3 widget
- * APIs that don't play nicely with Compose-TV focus) and Toast (system-level
- * one renders behind the activity on some TV firmwares).
- *
- * Usage: `Toaster.show("Saved", Toaster.Kind.OK)` from anywhere; the [ToasterHost]
- * mounted in MainActivity renders the current message at the bottom-center.
+ * App-wide toast layer. Must NOT use a full-screen hit-target when idle —
+ * that blocks every click/focus event on TV and phones.
  */
 object Toaster {
     enum class Kind { INFO, OK, ERROR }
@@ -57,19 +50,20 @@ fun ToasterHost() {
     LaunchedEffect(msg?.id) {
         if (msg != null) {
             delay(3500)
-            // Only clear if the message we observed is still the active one
-            // (a newer toast may have replaced it in the meantime).
             if (Toaster.state.value?.id == msg?.id) Toaster.clear()
         }
     }
 
+    // Nothing in the tree when idle → zero touch/focus interception.
+    if (msg == null) return
+
     Box(
         Modifier
             .fillMaxSize()
-            .padding(PaddingValues(bottom = safeBottomPadding(24.dp))),
+            .padding(bottom = safeBottomPadding(24.dp)),
         contentAlignment = Alignment.BottomCenter,
     ) {
-        AnimatedVisibility(visible = msg != null, enter = fadeIn(), exit = fadeOut()) {
+        AnimatedVisibility(visible = true, enter = fadeIn(), exit = fadeOut()) {
             val m = msg ?: return@AnimatedVisibility
             val (bg, fg) = when (m.kind) {
                 Toaster.Kind.OK -> MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.onPrimary

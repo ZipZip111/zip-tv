@@ -119,35 +119,29 @@ fun MoviesScreen(
                         }
                     }
                 } else if (liveMovies.isNotEmpty()) {
+                    ContentRail(
+                        title = S.moviesTitle,
+                        eyebrow = S.homeCinemaEyebrow,
+                        items = liveMovies,
+                        itemKey = { it.id },
+                        cardWidth = 260.dp,
+                    ) { ch ->
+                        PosterCard(
+                            title = ch.name,
+                            poster = ch.logo,
+                            subtitle = S.live,
+                            aspect = 16f / 9f,
+                        ) { vm.playLiveChannel(ch, onPlayLive) }
+                    }
                     Text(
                         S.liveChannelsCountTemplate.format(liveMovies.size),
                         color = com.ultratv.tv.nativeapp.ui.theme.UltraTokens.Fg3,
-                        fontSize = 14.sp,
+                        fontSize = 13.sp,
                         modifier = Modifier.padding(
                             start = com.ultratv.tv.nativeapp.ui.theme.UltraTokens.EdgeGutter,
-                            bottom = 12.dp,
-                        ),
-                    )
-                    LazyVerticalGrid(
-                        columns = GridCells.Adaptive(minSize = 180.dp),
-                        contentPadding = PaddingValues(
-                            start = com.ultratv.tv.nativeapp.ui.theme.UltraTokens.EdgeGutter,
-                            end = com.ultratv.tv.nativeapp.ui.theme.UltraTokens.EdgeGutter,
                             bottom = 40.dp,
                         ),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.height(((liveMovies.size.coerceAtMost(12) / 3 + 1).coerceAtLeast(2) * 140).dp),
-                    ) {
-                        items(liveMovies, key = { it.id }) { ch ->
-                            PosterCard(
-                                title = ch.name,
-                                poster = ch.logo,
-                                subtitle = S.live,
-                                aspect = 16f / 9f,
-                            ) { vm.playLiveChannel(ch, onPlayLive) }
-                        }
-                    }
+                    )
                 } else {
                     Text(
                         S.noMovies,
