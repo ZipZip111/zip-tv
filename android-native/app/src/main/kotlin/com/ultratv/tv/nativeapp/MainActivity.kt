@@ -1,5 +1,7 @@
 package com.ultratv.tv.nativeapp
 
+import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -82,7 +84,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, true)
+        // Match upstream Ultra TV on leanback/TV; keep inset fitting on phone/emulators.
+        val uiMode = resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
+        val isTv = uiMode == Configuration.UI_MODE_TYPE_TELEVISION ||
+            packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+        WindowCompat.setDecorFitsSystemWindows(window, !isTv)
         RemoteLog.info("activity", "onCreate restoredState=${savedInstanceState != null}")
         setContent { Root(playback = playback) }
         kickoffStartupTasks()
