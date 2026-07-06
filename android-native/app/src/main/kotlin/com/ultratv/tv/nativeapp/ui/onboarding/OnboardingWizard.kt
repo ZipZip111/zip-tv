@@ -117,8 +117,8 @@ fun OnboardingWizard(
             }
             Spacer(Modifier.width(14.dp))
             Column {
-                Text("ULTRA", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = UltraTokens.Fg)
-                Text("TV", fontSize = 10.sp, letterSpacing = 3.sp, color = UltraTokens.Fg3)
+                Text("ZIP", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = UltraTokens.Fg)
+                Text("TV", fontSize = 10.sp, letterSpacing = 3.sp, color = UltraTokens.Accent)
             }
         }
 
@@ -276,10 +276,10 @@ private fun ProviderStep(
                     .clip(RoundedCornerShape(20.dp))
                     .background(
                         Brush.linearGradient(
-                            listOf(UltraTokens.AccentTint, Color(0x05FF3A2F))
+                            listOf(UltraTokens.AccentTint, UltraTokens.AccentGhost)
                         )
                     )
-                    .border(1.dp, Color(0x40FF3A2F), RoundedCornerShape(20.dp))
+                    .border(1.dp, UltraTokens.AccentBorder, RoundedCornerShape(20.dp))
                     .padding(28.dp),
             ) {
                 Box(

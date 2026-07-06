@@ -9,33 +9,36 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 
-// ─── Ultra TV — design tokens, mirrored from the design bundle (styles.css)
-// All visual constants live here so screens stay consistent and a future theme
-// switch can swap them in one place.
+// ─── Zip-TV — design tokens from zip-dev.ru (styles.css)
+// Accent lime #9dff4f on near-black surfaces.
 
 object UltraTokens {
-    // Accent
-    val Accent       = Color(0xFFFF3A2F)
-    val Accent2      = Color(0xFFFF6A4A)
-    val AccentGlow   = Color(0x8CFF3A2F)
-    val AccentSoft   = Color(0x24FF3A2F)  // ~14% — pill highlights
-    val AccentTint   = Color(0x1AFF3A2F)  // ~10% — gradient stops
+    // Accent — zip-dev.ru brand green
+    val Accent       = Color(0xFF9DFF4F)
+    val Accent2      = Color(0xFF7ACC3A)
+    val AccentGlow   = Color(0x8C9DFF4F)
+    val AccentSoft   = Color(0x269DFF4F)  // ~15% — pill highlights
+    val AccentTint   = Color(0x1A9DFF4F)  // ~10% — gradient stops
+    val AccentGhost  = Color(0x059DFF4F)  // ~2% — card gradient end
+    val AccentBorder = Color(0x409DFF4F)  // ~25% — card borders
+    val AccentBorderMedium = Color(0x4D9DFF4F)
+    val AccentBorderStrong = Color(0x669DFF4F)
 
     // Status
-    val Live = Color(0xFFFF3A2F)
-    val Hd   = Color(0xFF00E5A0)
-    val Uhd  = Color(0xFFFFB547)
-    val Ok   = Color(0xFF7FFFAF)
+    val Live = Color(0xFF9DFF4F)
+    val Hd   = Color(0xFF9DFF4F)
+    val Uhd  = Color(0xFFB8FF7A)
+    val Ok   = Color(0xFF9DFF4F)
     val Warn = Color(0xFFFFB547)
 
-    // Neutrals — AMOLED defaults; theme variants override Bg0/1/2 in Theme.kt
-    val Fg  = Color(0xFFF5F5F7)
+    // Neutrals — zip-dev.ru dark palette
+    val Fg  = Color(0xFFF5F5F5)
     val Fg2 = Color(0xFFC7C7CF)
-    val Fg3 = Color(0xFF8A8A94)
+    val Fg3 = Color(0xFFA6A6A6)
     val Fg4 = Color(0xFF5A5A64)
 
-    val Line  = Color(0x14FFFFFF)   // 8%
-    val Line2 = Color(0x24FFFFFF)   // 14%
+    val Line  = Color(0x142A2A2A)
+    val Line2 = Color(0x402A2A2A)
 
     // Surfaces — overlays on top of bg-0
     val Surface1      = Color(0x0AFFFFFF) // 4%
@@ -46,8 +49,8 @@ object UltraTokens {
     val ScrimStrong   = Color(0xD9000000) // 85%
 
     // CTA
-    val CtaBg        = Color(0xFFFFFFFF)
-    val CtaFgOnCta   = Color(0xFF0A0A0D)
+    val CtaBg        = Color(0xFF9DFF4F)
+    val CtaFgOnCta   = Color(0xFF0A0A0A)
 
     // Radii
     val RadiusXs: Dp = 6.dp
@@ -60,25 +63,16 @@ object UltraTokens {
     val SidebarCollapsed: Dp = 92.dp
     val SidebarExpanded:  Dp = 220.dp
     val TopBarHeight:     Dp = 76.dp
-    val EdgeGutter:       Dp = 80.dp     // matches the prototype's 0 80px page padding
-    val LeftEdge:         Dp = 92.dp     // content starts after the collapsed sidebar
+    val EdgeGutter:       Dp = 80.dp
+    val LeftEdge:         Dp = 92.dp
 }
 
 object UltraFonts {
-    // Geist / Geist Mono / Instrument Serif are bundled via downloadable fonts in
-    // the prototype; on-device we fall back to system families until the assets
-    // ship. Keeping the references centralised lets us swap them in one place.
     val Sans:  FontFamily = FontFamily.SansSerif
     val Mono:  FontFamily = FontFamily.Monospace
     val Serif: FontFamily = FontFamily.Serif
 }
 
-/**
- * Card colors that play nice with our AMOLED theme. The TV CardDefaults use
- * onSurface (≈ white) as the focused container, which gives a blinding white
- * card on focus. Use this helper instead so focus reads as an accent-tinted
- * surface with proper text contrast.
- */
 @androidx.compose.runtime.Composable
 @androidx.tv.material3.ExperimentalTvMaterial3Api
 fun ultraCardColors(
@@ -95,19 +89,13 @@ fun ultraCardColors(
     pressedContentColor = focusedContentColor,
 )
 
-/**
- * Button colors that play nice with our AMOLED theme. Same problem as the
- * Card defaults — TV ButtonDefaults uses primary/onSurface as the focused
- * container, which on our scheme reads as solid red or solid white. Use this
- * helper to keep buttons visually consistent on focus.
- */
 @androidx.compose.runtime.Composable
 @androidx.tv.material3.ExperimentalTvMaterial3Api
 fun ultraButtonColors(
     containerColor: androidx.compose.ui.graphics.Color = UltraTokens.Surface2,
     contentColor: androidx.compose.ui.graphics.Color = UltraTokens.Fg,
     focusedContainerColor: androidx.compose.ui.graphics.Color = UltraTokens.Accent,
-    focusedContentColor: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color.White,
+    focusedContentColor: androidx.compose.ui.graphics.Color = UltraTokens.CtaFgOnCta,
 ): androidx.tv.material3.ButtonColors = androidx.tv.material3.ButtonDefaults.colors(
     containerColor = containerColor,
     contentColor = contentColor,
@@ -118,7 +106,6 @@ fun ultraButtonColors(
 )
 
 object UltraType {
-    // Editorial titles
     val HeroDisplay = TextStyle(
         fontFamily = UltraFonts.Serif,
         fontSize = 84.sp,
@@ -154,7 +141,7 @@ object UltraType {
     val Eyebrow = TextStyle(
         fontFamily = UltraFonts.Sans,
         fontSize = 13.sp,
-        letterSpacing = 2.3.sp,           // ≈ 0.18em
+        letterSpacing = 2.3.sp,
         fontWeight = FontWeight.Medium,
         color = UltraTokens.Fg3,
     )

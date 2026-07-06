@@ -748,7 +748,7 @@ private fun TonightSchedule(
                 focusedContainerColor = UltraTokens.Accent,
                 focusedContentColor = androidx.compose.ui.graphics.Color.White,
             ),
-            modifier = Modifier.fillMaxWidth().border(1.dp, Color(0x4DFF3A2F), RoundedCornerShape(14.dp)),
+            modifier = Modifier.fillMaxWidth().border(1.dp, UltraTokens.AccentBorderMedium, RoundedCornerShape(14.dp)),
         ) {
             Column(Modifier.padding(18.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -849,11 +849,12 @@ private fun formatHm(ms: Long): String = com.ultratv.tv.nativeapp.ui.common.EpgC
 
 @Composable
 private fun LiveChip() {
+    val S = com.ultratv.tv.nativeapp.i18n.LocalStrings.current
     Row(
         Modifier
             .clip(RoundedCornerShape(999.dp))
-            .background(Color(0x24FF3A2F))
-            .border(1.dp, Color(0x66FF3A2F), RoundedCornerShape(999.dp))
+            .background(UltraTokens.AccentSoft)
+            .border(1.dp, UltraTokens.AccentBorderStrong, RoundedCornerShape(999.dp))
             .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -864,7 +865,7 @@ private fun LiveChip() {
                 .background(UltraTokens.Live)
         )
         Spacer(Modifier.width(8.dp))
-        Text("EN DIRECT", color = Color(0xFFFFB5AF), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.7.sp)
+        Text(S.liveOnAirPill, color = UltraTokens.Accent, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.7.sp)
     }
 }
 
@@ -876,7 +877,7 @@ private fun UhdBadge() {
             .background(UltraTokens.Uhd)
             .padding(horizontal = 7.dp, vertical = 3.dp),
     ) {
-        Text("HD", color = Color(0xFF2B1700), fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.4.sp)
+        Text("HD", color = UltraTokens.CtaFgOnCta, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.4.sp)
     }
 }
 
@@ -893,12 +894,12 @@ private fun ProgrammeCard(
             .clip(RoundedCornerShape(14.dp))
             .background(
                 if (accent) Brush.linearGradient(
-                    listOf(Color(0x1AFF3A2F), Color(0x05FF3A2F))
+                    listOf(UltraTokens.AccentTint, UltraTokens.AccentGhost)
                 ) else Brush.linearGradient(listOf(UltraTokens.Surface1, UltraTokens.Surface1))
             )
             .border(
                 1.dp,
-                if (accent) Color(0x4DFF3A2F) else UltraTokens.Line,
+                if (accent) UltraTokens.AccentBorderMedium else UltraTokens.Line,
                 RoundedCornerShape(14.dp),
             )
             .padding(18.dp),

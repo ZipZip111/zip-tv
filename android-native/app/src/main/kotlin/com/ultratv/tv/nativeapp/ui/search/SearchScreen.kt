@@ -366,7 +366,7 @@ private fun KeyboardKey(
                 1.dp,
                 when {
                     focused -> UltraTokens.Accent
-                    danger -> Color(0x4DFF3A2F)
+                    danger -> UltraTokens.AccentBorderMedium
                     else -> UltraTokens.Line
                 },
                 RoundedCornerShape(8.dp),

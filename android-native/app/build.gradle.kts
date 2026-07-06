@@ -35,10 +35,10 @@ fun resolveBuildConfigValue(name: String, default: String): String =
         ?: default
 
 val ultraLogUrl = resolveBuildConfigValue(
-    "ULTRA_LOG_URL", "https://ultratv-config.khalilbenaz.workers.dev",
+    "ULTRA_LOG_URL", "",
 )
 val ultraLogToken = resolveBuildConfigValue(
-    "ULTRA_LOG_TOKEN", "f-w31zHuqg0ntBPRSJtOVEXGB55B9uv5",
+    "ULTRA_LOG_TOKEN", "",
 )
 
 android {
@@ -48,7 +48,7 @@ android {
     defaultConfig {
         // Different applicationId during development so it can be installed
         // alongside the existing Capacitor build (com.ultratv.tv).
-        applicationId = "com.ultratv.tv.nativeapp"
+        applicationId = "ru.zipdev.ziptv"
         minSdk = 28
         targetSdk = 35
         versionCode = appVersionCode

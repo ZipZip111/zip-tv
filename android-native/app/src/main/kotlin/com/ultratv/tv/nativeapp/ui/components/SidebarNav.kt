@@ -106,8 +106,8 @@ fun SidebarNav(navController: NavController) {
             if (expanded) {
                 Spacer(Modifier.width(12.dp))
                 Column {
-                    Text("ULTRA", color = UltraTokens.Fg, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    Text("TV", color = UltraTokens.Fg3, fontSize = 10.sp, letterSpacing = 3.sp)
+                    Text("ZIP", color = UltraTokens.Fg, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text("TV", color = UltraTokens.Accent, fontSize = 10.sp, letterSpacing = 3.sp)
                 }
             }
         }
@@ -147,8 +147,8 @@ fun SidebarNav(navController: NavController) {
             if (expanded) {
                 Spacer(Modifier.width(12.dp))
                 Column {
-                    Text("Khalil", color = UltraTokens.Fg2, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                    Text("Salon · UHD", color = UltraTokens.Fg3, fontSize = 11.sp)
+                    Text("zip-dev.ru", color = UltraTokens.Fg2, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                    Text("IPTV · Android TV", color = UltraTokens.Fg3, fontSize = 11.sp)
                 }
             }
         }

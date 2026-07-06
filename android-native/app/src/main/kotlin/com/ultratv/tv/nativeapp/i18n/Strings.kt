@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 enum class AppLang(val code: String, val displayName: String, val rtl: Boolean = false) {
     System("system", "System (auto)"),
     English("en", "English"),
+    Russian("ru", "Русский"),
     French("fr", "Français"),
     Spanish("es", "Español"),
     Arabic("ar", "العربية", rtl = true);
@@ -326,8 +327,8 @@ private val EN = Strings(
     navCategories = "Categories", navMultiview = "Multi-View",
     navRecordings = "Recordings", navSettings = "Settings",
 
-    homeWelcome = "Welcome to Ultra TV",
-    homeSubtitle = "Native build · D-pad ready",
+    homeWelcome = "Welcome to Zip-TV",
+    homeSubtitle = "zip-dev.ru · Android TV",
     homeContinueWatching = "Continue watching",
     homeRecentlyWatched = "Recently watched",
     homeFeaturedChannels = "Featured channels",
@@ -365,11 +366,11 @@ private val EN = Strings(
     categoriesHide = "Hide",
     categoriesCountTemplate = "%1\$d total · %2\$d shown · %3\$d hidden",
 
-    wizardWelcomeTitle = "👋 Welcome to Ultra TV",
+    wizardWelcomeTitle = "👋 Welcome to Zip-TV",
     wizardAddProviderTitle = "📡 Add a provider",
     wizardDoneTitle = "🎉 You're set",
     wizardStepTemplate = "Step %1\$d / %2\$d",
-    wizardIntro1 = "Ultra TV is a native Android-TV IPTV client. It speaks Xtream Codes, M3U / M3U8, M3U files from local storage, and Stalker Portal.",
+    wizardIntro1 = "Zip-TV is a native Android-TV IPTV client. It speaks Xtream Codes, M3U / M3U8, M3U files from local storage, and Stalker Portal.",
     wizardIntro2 = "It uses Compose-TV for the UI, Media3 / ExoPlayer for playback, Room for the catalog. D-pad navigation works out of the box.",
     wizardTwoPaths = "Two paths:",
     wizardPathManual = "• Settings → +Xtream / +M3U URL / +M3U file / +Stalker. Fill in the form.",
@@ -464,7 +465,7 @@ private val EN = Strings(
     prefAutoPlayNext = "Auto-play next episode",
     prefAutoPlayNextHint = "Automatically play S0xE0y+1 when an episode ends.",
     prefLaunchAtBoot = "Launch at TV boot",
-    prefLaunchAtBootHint = "Open Ultra TV automatically when the box finishes booting.",
+    prefLaunchAtBootHint = "Open Zip-TV automatically when the box finishes booting.",
     prefAutoPlayLast = "Auto-play last watched on launch",
     prefAutoPlayLastHint = "Resume the last channel / movie / episode when the app starts.",
     prefIntervalLaunch = "Every launch",
@@ -574,7 +575,7 @@ private val FR = Strings(
     navCategories = "Catégories", navMultiview = "Multi-vue",
     navRecordings = "Enregistrements", navSettings = "Paramètres",
 
-    homeWelcome = "Bienvenue dans Ultra TV",
+    homeWelcome = "Bienvenue dans Zip-TV",
     homeSubtitle = "Build native · prêt pour la télécommande",
     homeContinueWatching = "Continuer à regarder",
     homeRecentlyWatched = "Récemment regardé",
@@ -613,11 +614,11 @@ private val FR = Strings(
     categoriesHide = "Masquer",
     categoriesCountTemplate = "%1\$d au total · %2\$d affichées · %3\$d masquées",
 
-    wizardWelcomeTitle = "👋 Bienvenue dans Ultra TV",
+    wizardWelcomeTitle = "👋 Bienvenue dans Zip-TV",
     wizardAddProviderTitle = "📡 Ajouter un fournisseur",
     wizardDoneTitle = "🎉 Tout est prêt",
     wizardStepTemplate = "Étape %1\$d / %2\$d",
-    wizardIntro1 = "Ultra TV est un client IPTV natif Android-TV. Il gère Xtream Codes, M3U / M3U8, fichiers M3U locaux et Stalker Portal.",
+    wizardIntro1 = "Zip-TV est un client IPTV natif Android-TV. Il gère Xtream Codes, M3U / M3U8, fichiers M3U locaux et Stalker Portal.",
     wizardIntro2 = "Il utilise Compose-TV pour l'UI, Media3 / ExoPlayer pour la lecture et Room pour le catalogue. La navigation à la télécommande fonctionne nativement.",
     wizardTwoPaths = "Deux options :",
     wizardPathManual = "• Paramètres → +Xtream / +M3U URL / +M3U fichier / +Stalker. Remplis le formulaire.",
@@ -712,7 +713,7 @@ private val FR = Strings(
     prefAutoPlayNext = "Auto-lecture épisode suivant",
     prefAutoPlayNextHint = "Lance S0xE0y+1 automatiquement à la fin d'un épisode.",
     prefLaunchAtBoot = "Lancer au démarrage de la TV",
-    prefLaunchAtBootHint = "Ouvre Ultra TV automatiquement quand la box démarre.",
+    prefLaunchAtBootHint = "Ouvre Zip-TV automatiquement quand la box démarre.",
     prefAutoPlayLast = "Reprendre le dernier au démarrage",
     prefAutoPlayLastHint = "Rejoue la dernière chaîne / film / épisode au lancement.",
     prefIntervalLaunch = "À chaque lancement",
@@ -822,7 +823,7 @@ private val ES = Strings(
     navCategories = "Categorías", navMultiview = "Multi-vista",
     navRecordings = "Grabaciones", navSettings = "Ajustes",
 
-    homeWelcome = "Bienvenido a Ultra TV",
+    homeWelcome = "Bienvenido a Zip-TV",
     homeSubtitle = "Build nativo · listo para mando a distancia",
     homeContinueWatching = "Continuar viendo",
     homeRecentlyWatched = "Vistos recientemente",
@@ -861,11 +862,11 @@ private val ES = Strings(
     categoriesHide = "Ocultar",
     categoriesCountTemplate = "%1\$d en total · %2\$d visibles · %3\$d ocultas",
 
-    wizardWelcomeTitle = "👋 Bienvenido a Ultra TV",
+    wizardWelcomeTitle = "👋 Bienvenido a Zip-TV",
     wizardAddProviderTitle = "📡 Añadir un proveedor",
     wizardDoneTitle = "🎉 Todo listo",
     wizardStepTemplate = "Paso %1\$d / %2\$d",
-    wizardIntro1 = "Ultra TV es un cliente IPTV nativo para Android-TV. Soporta Xtream Codes, M3U / M3U8, archivos M3U locales y Stalker Portal.",
+    wizardIntro1 = "Zip-TV es un cliente IPTV nativo para Android-TV. Soporta Xtream Codes, M3U / M3U8, archivos M3U locales y Stalker Portal.",
     wizardIntro2 = "Usa Compose-TV para la UI, Media3 / ExoPlayer para reproducción y Room para el catálogo. La navegación con mando funciona de fábrica.",
     wizardTwoPaths = "Dos formas:",
     wizardPathManual = "• Ajustes → +Xtream / +M3U URL / +M3U archivo / +Stalker. Rellena el formulario.",
@@ -960,7 +961,7 @@ private val ES = Strings(
     prefAutoPlayNext = "Reproducir siguiente episodio",
     prefAutoPlayNextHint = "Reproduce S0xE0y+1 automáticamente al acabar un episodio.",
     prefLaunchAtBoot = "Iniciar al encender la TV",
-    prefLaunchAtBootHint = "Abre Ultra TV automáticamente cuando la box arranca.",
+    prefLaunchAtBootHint = "Abre Zip-TV automáticamente cuando la box arranca.",
     prefAutoPlayLast = "Reproducir último al inicio",
     prefAutoPlayLastHint = "Reanuda el último canal / película / episodio al iniciar.",
     prefIntervalLaunch = "Cada inicio",
@@ -1070,7 +1071,7 @@ private val AR = Strings(
     navCategories = "الفئات", navMultiview = "عرض متعدد",
     navRecordings = "التسجيلات", navSettings = "الإعدادات",
 
-    homeWelcome = "مرحبًا بكم في Ultra TV",
+    homeWelcome = "مرحبًا بكم في Zip-TV",
     homeSubtitle = "نسخة أصلية · جاهزة لجهاز التحكم",
     homeContinueWatching = "متابعة المشاهدة",
     homeRecentlyWatched = "شوهد مؤخرًا",
@@ -1109,11 +1110,11 @@ private val AR = Strings(
     categoriesHide = "إخفاء",
     categoriesCountTemplate = "%1\$d إجمالًا · %2\$d ظاهرة · %3\$d مخفية",
 
-    wizardWelcomeTitle = "👋 مرحبًا بك في Ultra TV",
+    wizardWelcomeTitle = "👋 مرحبًا بك في Zip-TV",
     wizardAddProviderTitle = "📡 إضافة موفّر",
     wizardDoneTitle = "🎉 كل شيء جاهز",
     wizardStepTemplate = "الخطوة %1\$d / %2\$d",
-    wizardIntro1 = "Ultra TV عميل IPTV أصلي لأندرويد TV. يدعم Xtream Codes وM3U / M3U8 وملفات M3U المحلية وStalker Portal.",
+    wizardIntro1 = "Zip-TV عميل IPTV أصلي لأندرويد TV. يدعم Xtream Codes وM3U / M3U8 وملفات M3U المحلية وStalker Portal.",
     wizardIntro2 = "يستخدم Compose-TV للواجهة وMedia3 / ExoPlayer للتشغيل وRoom للكتالوج. التنقل بالريموت يعمل تلقائيًا.",
     wizardTwoPaths = "طريقتان:",
     wizardPathManual = "• الإعدادات ← +Xtream / +M3U URL / +M3U ملف / +Stalker. املأ النموذج.",
@@ -1208,7 +1209,7 @@ private val AR = Strings(
     prefAutoPlayNext = "تشغيل تلقائي للحلقة التالية",
     prefAutoPlayNextHint = "تشغيل S0xE0y+1 تلقائيًا عند انتهاء الحلقة.",
     prefLaunchAtBoot = "التشغيل عند إقلاع التلفاز",
-    prefLaunchAtBootHint = "فتح Ultra TV تلقائيًا عند انتهاء إقلاع الجهاز.",
+    prefLaunchAtBootHint = "فتح Zip-TV تلقائيًا عند انتهاء إقلاع الجهاز.",
     prefAutoPlayLast = "تشغيل آخر مشاهدة عند البدء",
     prefAutoPlayLastHint = "استئناف آخر قناة / فيلم / حلقة عند تشغيل التطبيق.",
     prefIntervalLaunch = "كل تشغيل",
@@ -1319,6 +1320,7 @@ fun stringsFor(lang: AppLang): Strings {
         AppLang.entries.firstOrNull { it.code == sys } ?: AppLang.English
     } else lang
     return when (resolved) {
+        AppLang.Russian -> RU
         AppLang.French -> FR
         AppLang.Spanish -> ES
         AppLang.Arabic -> AR

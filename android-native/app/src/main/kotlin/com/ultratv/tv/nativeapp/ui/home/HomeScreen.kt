@@ -342,10 +342,10 @@ private fun MacOnboardingCard(mac: String, onGoSettings: () -> Unit) {
             .clip(RoundedCornerShape(16.dp))
             .background(
                 Brush.linearGradient(
-                    listOf(UltraTokens.AccentTint, Color(0x05FF3A2F))
+                    listOf(UltraTokens.AccentTint, UltraTokens.AccentGhost)
                 )
             )
-            .border(1.dp, Color(0x40FF3A2F), RoundedCornerShape(16.dp))
+            .border(1.dp, UltraTokens.AccentBorder, RoundedCornerShape(16.dp))
             .padding(22.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {

@@ -33,8 +33,9 @@ import java.util.concurrent.TimeUnit
 object UpdateChecker {
 
     private const val TAG = "update"
-    private const val REPO = "khalilbenaz/ultra-tv"
-    private const val APK_NAME = "UltraTV-debug.apk"
+    private const val ENABLE_AUTO_UPDATE = true
+    private const val REPO = "ZipZip111/zip-tv"
+    private const val APK_NAME = "ZipTV-debug.apk"
 
     data class UpdateInfo(
         val tag: String,
@@ -59,6 +60,7 @@ object UpdateChecker {
     }
 
     suspend fun checkForUpdate(): UpdateInfo? = withContext(Dispatchers.IO) {
+        if (!ENABLE_AUTO_UPDATE) return@withContext null
         runCatching {
             val req = Request.Builder()
                 .url("https://api.github.com/repos/$REPO/releases/latest")

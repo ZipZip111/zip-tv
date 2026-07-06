@@ -7,50 +7,37 @@ import androidx.tv.material3.darkColorScheme
 import androidx.tv.material3.lightColorScheme
 import com.ultratv.tv.nativeapp.data.prefs.AppTheme
 
-// ─── Color schemes — driven by the design tokens.
-// Accent is the same Ultra red across themes; bg / fg flip per theme.
-// Keep Material `primary` = Accent so default focus/CTA tint comes from the
-// design system, then override surfaces per palette.
-
 private val Amoled = darkColorScheme(
     primary = UltraTokens.Accent,
-    onPrimary = Color.White,
-    background = Color(0xFF000000),
+    onPrimary = UltraTokens.CtaFgOnCta,
+    background = Color(0xFF080808),
     onBackground = UltraTokens.Fg,
-    surface = Color(0xFF060608),
+    surface = Color(0xFF111111),
     onSurface = UltraTokens.Fg,
-    surfaceVariant = Color(0xFF0C0C10),
+    surfaceVariant = Color(0xFF151515),
     onSurfaceVariant = UltraTokens.Fg2,
     border = UltraTokens.Line,
-    inverseSurface = Color(0xFF181820),
-    // TV Button/Card focused state reads inverseOnSurface as the text colour;
-    // keeping it near-white made focus white-on-white. A near-black inverse-on
-    // means focused state renders as a white pill with dark text — readable.
-    inverseOnSurface = Color(0xFF0A0A0D),
+    inverseSurface = Color(0xFF1D1D1D),
+    inverseOnSurface = Color(0xFF0A0A0A),
 )
 
 private val Dark = darkColorScheme(
     primary = UltraTokens.Accent,
-    onPrimary = Color.White,
-    background = Color(0xFF0A0A0D),
+    onPrimary = UltraTokens.CtaFgOnCta,
+    background = Color(0xFF0A0A0A),
     onBackground = UltraTokens.Fg,
-    surface = Color(0xFF101015),
+    surface = Color(0xFF111111),
     onSurface = UltraTokens.Fg,
-    surfaceVariant = Color(0xFF181820),
+    surfaceVariant = Color(0xFF151515),
     onSurfaceVariant = UltraTokens.Fg2,
     border = UltraTokens.Line,
-    inverseSurface = Color(0xFF1F1F28),
-    // TV Button/Card focused state reads inverseOnSurface as the text colour;
-    // keeping it near-white made focus white-on-white. A near-black inverse-on
-    // means focused state renders as a white pill with dark text — readable.
-    inverseOnSurface = Color(0xFF0A0A0D),
+    inverseSurface = Color(0xFF1D1D1D),
+    inverseOnSurface = Color(0xFF0A0A0A),
 )
 
-// Light scheme — cream / ink palette, mirrored from the prototype's
-// `body[data-theme="light"]` block. Same accent red, inverted neutrals.
 private val Light = lightColorScheme(
     primary = UltraTokens.Accent,
-    onPrimary = Color.White,
+    onPrimary = UltraTokens.CtaFgOnCta,
     background = Color(0xFFF4F3EF),
     onBackground = Color(0xFF14110E),
     surface = Color(0xFFFFFFFF),
@@ -64,19 +51,16 @@ private val Light = lightColorScheme(
 
 private val Blue = darkColorScheme(
     primary = UltraTokens.Accent,
-    onPrimary = Color.White,
-    background = Color(0xFF070B1A),
+    onPrimary = UltraTokens.CtaFgOnCta,
+    background = Color(0xFF080808),
     onBackground = UltraTokens.Fg,
-    surface = Color(0xFF0C1226),
+    surface = Color(0xFF111111),
     onSurface = UltraTokens.Fg,
-    surfaceVariant = Color(0xFF141B35),
+    surfaceVariant = Color(0xFF151515),
     onSurfaceVariant = UltraTokens.Fg2,
     border = UltraTokens.Line,
-    inverseSurface = Color(0xFF1B2447),
-    // TV Button/Card focused state reads inverseOnSurface as the text colour;
-    // keeping it near-white made focus white-on-white. A near-black inverse-on
-    // means focused state renders as a white pill with dark text — readable.
-    inverseOnSurface = Color(0xFF0A0A0D),
+    inverseSurface = Color(0xFF1D1D1D),
+    inverseOnSurface = Color(0xFF0A0A0A),
 )
 
 @Composable

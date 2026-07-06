@@ -90,7 +90,7 @@ class SettingsViewModel @Inject constructor(
         // shares the same KV namespace (rows are scoped per MAC, so it's
         // technically isolated, but the admin password can read everything —
         // self-host for full privacy).
-        const val DEFAULT_WORKER_URL = "https://ultratv-config.khalilbenaz.workers.dev"
+        const val DEFAULT_WORKER_URL = ""
     }
 
     fun saveWorkerBase(url: String) {

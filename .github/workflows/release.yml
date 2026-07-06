@@ -96,10 +96,10 @@ jobs:
             ls -R android-native/app/build/outputs/apk || true
             exit 1
           fi
-          cp "$SRC" dist/UltraTV-debug.apk
+          cp "$SRC" dist/ZipTV-debug.apk
           cd dist
-          sha256sum UltraTV-debug.apk | awk '{print $1}' > UltraTV-debug.apk.sha256
-          echo "SHA-256:"; cat UltraTV-debug.apk.sha256
+          sha256sum ZipTV-debug.apk | awk '{print $1}' > ZipTV-debug.apk.sha256
+          echo "SHA-256:"; cat ZipTV-debug.apk.sha256
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
@@ -108,5 +108,5 @@ jobs:
           name: ${{ github.ref_name }}
           generate_release_notes: true
           files: |
-            dist/UltraTV-debug.apk
-            dist/UltraTV-debug.apk.sha256
+            dist/ZipTV-debug.apk
+            dist/ZipTV-debug.apk.sha256
