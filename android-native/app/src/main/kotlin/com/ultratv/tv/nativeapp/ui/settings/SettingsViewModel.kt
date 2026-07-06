@@ -224,21 +224,32 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun addM3uAndSync(name: String, url: String) {
+    fun addM3uAndSync(name: String, url: String, epgUrl: String = "") {
         viewModelScope.launch {
             _syncing.value = true
             _message.value = "Adding M3U provider…"
             try {
-                val id = repo.addM3u(name, url)
+                val id = repo.addM3u(name, url, epgUrl)
                 makeDefaultIfNone(id)
                 val n = repo.syncAll(id) { _message.value = it }
-                _message.value = "Done — $n channels"
+                if (epgUrl.isNotBlank()) {
+                    _message.value = "Loading EPG…"
+                    val epg = repo.syncXmltv(id) { _message.value = it }
+                    _message.value = "Done — $n channels · $epg programmes"
+                } else {
+                    _message.value = "Done — $n channels"
+                }
             } catch (t: Throwable) {
                 _message.value = "Error: ${t.message}"
             } finally {
                 _syncing.value = false
             }
         }
+    }
+
+    fun addIptvOrgPreset(preset: com.ultratv.tv.nativeapp.data.iptvorg.IptvOrgPreset, russianUi: Boolean) {
+        val label = "${preset.emoji} iptv-org · ${preset.displayName(russianUi)}"
+        addM3uAndSync(label, preset.playlistUrl, preset.epgUrl)
     }
 
     fun resync(providerId: Long) {

@@ -49,16 +49,22 @@ class ProviderRepository @Inject constructor(
     suspend fun firstActive(): ProviderEntity? = providerDao.firstActive()
     suspend fun byId(id: Long): ProviderEntity? = providerDao.byId(id)
 
-    suspend fun addM3u(name: String, url: String): Long {
-        providerDao.findByIdentity("M3U", url, "")?.let { return it.id }
+    suspend fun addM3u(name: String, url: String, epgUrl: String = ""): Long {
+        providerDao.findByIdentity("M3U", url, "")?.let { existing ->
+            if (epgUrl.isNotBlank() && existing.password != epgUrl) {
+                providerDao.upsert(existing.copy(password = epgUrl))
+            }
+            return existing.id
+        }
         val pid = providerDao.upsert(
             ProviderEntity(
                 name = name.ifBlank { runCatching { java.net.URI(url).host }.getOrNull() ?: "M3U" },
                 kind = "M3U",
                 baseUrl = url,
                 username = "",
-                password = "",
-                active = false,    // explicit default is set in Settings; see setDefault
+                // For M3U providers `password` stores an optional XMLTV feed URL.
+                password = epgUrl,
+                active = false,
             ),
         )
         return pid
@@ -196,14 +202,12 @@ class ProviderRepository @Inject constructor(
      */
     suspend fun syncXmltv(providerId: Long, onProgress: (String) -> Unit = {}): Int {
         val p = providerDao.byId(providerId) ?: return 0
-        // Local M3U can't fetch xmltv. Stalker has its own EPG path (TODO).
         if (p.kind == "M3U_LOCAL" || p.kind == "STALKER") return 0
         fun step(s: String, pct: Int?) {
             onProgress(s); syncStatus.set(SyncStatusBus.Status(p.name, s, pct))
         }
         try {
             step("Fetching xmltv…", 10)
-            // Build (xmltv channel id → local channel id) map for matching.
             val all = channelDao.observeForProvider(providerId).first()
             val map = all
                 .mapNotNull { ch -> ch.epgChannelId?.takeIf { it.isNotBlank() }?.let { it to ch.id } }
@@ -213,7 +217,15 @@ class ProviderRepository @Inject constructor(
                 return 0
             }
             step("Parsing xmltv (matching ${map.size} channels)…", 30)
-            val programmes = xmltv.fetchAndParse(p, map)
+            val programmes = when {
+                p.kind == "M3U" && p.password.startsWith("http", ignoreCase = true) ->
+                    xmltv.fetchAndParseFromUrl(p.password, map)
+                p.kind == "M3U" -> {
+                    step("No EPG URL configured for this M3U provider", 100)
+                    return 0
+                }
+                else -> xmltv.fetchAndParse(p, map)
+            }
             step("Saving ${programmes.size} programmes…", 75)
             epgDao.deleteForProvider(p.id)
             programmes.chunked(500).forEach { epgDao.upsertAll(it) }

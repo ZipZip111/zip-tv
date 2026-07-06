@@ -42,10 +42,23 @@ class XmltvParser @Inject constructor(private val ok: OkHttpClient) {
     ): List<EpgEntity> = withContext(Dispatchers.IO) {
         val url = "${p.baseUrl}/xmltv.php?username=${java.net.URLEncoder.encode(p.username, "UTF-8")}" +
             "&password=${java.net.URLEncoder.encode(p.password, "UTF-8")}"
+        fetchAndParseFromUrl(url, channelXmltvIdToLocalId)
+    }
+
+    /** Fetch XMLTV from an arbitrary URL (M3U EPG presets, gzip supported). */
+    suspend fun fetchAndParseFromUrl(
+        url: String,
+        channelXmltvIdToLocalId: Map<String, Long>,
+    ): List<EpgEntity> = withContext(Dispatchers.IO) {
         ok.newCall(Request.Builder().url(url).build()).execute().use { resp ->
             if (!resp.isSuccessful) error("HTTP ${resp.code} fetching xmltv")
-            val stream = resp.body?.byteStream() ?: error("Empty xmltv body")
-            parse(stream, channelXmltvIdToLocalId)
+            val raw = resp.body?.byteStream() ?: error("Empty xmltv body")
+            val input = if (url.endsWith(".gz", ignoreCase = true)) {
+                java.util.zip.GZIPInputStream(raw)
+            } else {
+                raw
+            }
+            input.use { parse(it, channelXmltvIdToLocalId) }
         }
     }
 

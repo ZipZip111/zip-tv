@@ -23,6 +23,16 @@
 - **Русский интерфейс** (+ EN, FR, ES, AR)
 - Дизайн в стиле [zip-dev.ru](https://zip-dev.ru) — тёмный фон `#080808`, accent `#9DFF4F`
 
+## Плейлисты iptv-org
+
+В **Настройки → Каталог iptv-org** одним нажатием добавляются публичные плейлисты с [github.com/iptv-org/iptv](https://github.com/iptv-org/iptv):
+
+- 🇷🇺 Россия (+ EPG)
+- 📰 Новости, ⚽ Спорт, 🎬 Кино и др.
+- 🌍 Весь мир (большой плейлист)
+
+EPG подтягивается автоматически из [iptv-epg.org](https://iptv-epg.org) по `tvg-id` каналов.
+
 ## Установка на приставку (x88 / x96)
 
 1. Скачайте [ZipTV-debug.apk](https://github.com/ZipZip111/zip-tv/releases/latest/download/ZipTV-debug.apk)

@@ -257,7 +257,16 @@ fun SettingsScreen(
             ) { Text(if (syncing) S.settingsSyncing else S.settingsSyncFromCloud, fontSize = 15.sp) }
         }
 
-        // ---- 2. Add a provider manually ----
+        // ---- 2. iptv-org catalog ----
+        SectionCard {
+            IptvOrgCatalogSection(
+                syncing = syncing,
+                onAddPreset = { vm.addIptvOrgPreset(it, S.navHome == "Главная") },
+            )
+            message?.let { Text(it, color = MaterialTheme.colorScheme.primary, fontSize = 13.sp) }
+        }
+
+        // ---- 3. Add a provider manually ----
         SectionCard {
             Text(S.settingsAddProviderTitle, color = MaterialTheme.colorScheme.primary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Text(
@@ -284,7 +293,7 @@ fun SettingsScreen(
             message?.let { Text(it, color = MaterialTheme.colorScheme.primary, fontSize = 13.sp) }
         }
 
-        // ---- 3. Configured providers ----
+        // ---- 4. Configured providers ----
         SectionCard {
             Text("${S.settingsConfiguredHeader} (${providers.size})", color = MaterialTheme.colorScheme.onBackground, fontSize = 17.sp, fontWeight = FontWeight.Bold)
             if (providers.isEmpty()) {
