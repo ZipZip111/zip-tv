@@ -26,6 +26,7 @@ import tv.own.owntv.core.sync.work.CatalogSyncScheduler
 import tv.own.owntv.core.util.Pin
 import tv.own.owntv.core.util.friendlySyncError
 import tv.own.owntv.core.launcher.LauncherIntegrationRepository
+import tv.own.owntv.BootstrapAssets
 import tv.own.owntv.ProductConfig
 import tv.own.owntv.core.sync.SyncCounts
 import tv.own.owntv.ui.theme.AccentColor
@@ -50,6 +51,7 @@ class SetupViewModel(
     private val epgSourceStore: tv.own.owntv.core.epg.EpgSourceStore,
     private val launcherIntegrationRepository: LauncherIntegrationRepository,
     private val catalogSyncScheduler: CatalogSyncScheduler,
+    private val bootstrapAssets: BootstrapAssets,
 ) : ViewModel() {
 
     // Semi-auto EPG: after the first playlist imports, offer a one-tap guide sync (with a live count) if it
@@ -132,7 +134,7 @@ class SetupViewModel(
         }
     }
 
-    /** Zip-TV first-run: import iptv-org presets sequentially without touching player/sync internals. */
+    /** Zip-TV first-run: import bootstrap presets sequentially without touching player/sync internals. */
     fun bootstrapDefaultPlaylists() {
         if (!ProductConfig.AUTO_BOOTSTRAP) return
         importJob?.cancel()
@@ -140,7 +142,8 @@ class SetupViewModel(
             _state.value = ImportState.Running
             _progress.value = null
             try {
-                if (!connectivity.isOnlineNow()) {
+                val needsNetwork = ProductConfig.BOOTSTRAP_PRESETS.any { it.assetPath == null }
+                if (needsNetwork && !connectivity.isOnlineNow()) {
                     _state.value = ImportState.Failed(friendlySyncError(null, online = false))
                     return@launch
                 }
@@ -151,10 +154,12 @@ class SetupViewModel(
                 val warnings = mutableListOf<String>()
                 var failure: String? = null
                 for (preset in ProductConfig.BOOTSTRAP_PRESETS) {
+                    val playlistUrl = preset.assetPath?.let { bootstrapAssets.resolvePlaylistPath(it) }
+                        ?: preset.playlistUrl
                     val source = sourceRepository.addM3uSource(
                         profileId = profileId,
                         name = preset.name,
-                        url = preset.playlistUrl,
+                        url = playlistUrl,
                         epgUrl = preset.epgUrl.takeIf { it.isNotBlank() },
                     )
                     if (firstSourceId == null) firstSourceId = source.id
@@ -189,7 +194,7 @@ class SetupViewModel(
                 } ?: ImportState.Success(summary)
                 val firstWithEpg = ProductConfig.BOOTSTRAP_PRESETS.firstOrNull { it.epgUrl.isNotBlank() }
                 if (firstWithEpg != null && failure == null) {
-                    sourceDao.getAllOnce().firstOrNull { it.url == firstWithEpg.playlistUrl }?.let { synced ->
+                    sourceDao.getAllOnce().firstOrNull { it.name == firstWithEpg.name }?.let { synced ->
                         if (epgRepository.guideUrl(synced) != null) {
                             pendingEpgSource = synced
                             _epgSync.value = tv.own.owntv.features.settings.EpgSyncUi.Ask(synced.name)
