@@ -97,51 +97,57 @@ private fun LiveScreenCompact(onPlay: (url: String, title: String) -> Unit, vm: 
     val S = com.ultratv.tv.nativeapp.i18n.LocalStrings.current
     val listState = rememberLazyListState()
 
-    Column(
-        Modifier
+    LazyColumn(
+        modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 12.dp, vertical = 8.dp),
+        state = listState,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Text(
-            S.navLive,
-            fontFamily = UltraFonts.Serif,
-            fontSize = 28.sp,
-            color = UltraTokens.Fg,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Spacer(Modifier.height(8.dp))
-        CategoryChips(
-            categories = cats,
-            selected = if (selected == CATEGORY_ALL) null else selected,
-            onSelect = { vm.selectCategory(it ?: CATEGORY_ALL) },
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(
-            S.liveChannelsCountTemplate.format(chans.size),
-            fontFamily = UltraFonts.Mono,
-            fontSize = 11.sp,
-            color = UltraTokens.Fg4,
-        )
-        Spacer(Modifier.height(6.dp))
+        item(key = "live-title") {
+            Text(
+                S.navLive,
+                fontFamily = UltraFonts.Serif,
+                fontSize = 28.sp,
+                color = UltraTokens.Fg,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.height(8.dp))
+        }
+        item(key = "live-chips") {
+            CategoryChips(
+                categories = cats,
+                selected = if (selected == CATEGORY_ALL) null else selected,
+                onSelect = { vm.selectCategory(it ?: CATEGORY_ALL) },
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                S.liveChannelsCountTemplate.format(chans.size),
+                fontFamily = UltraFonts.Mono,
+                fontSize = 11.sp,
+                color = UltraTokens.Fg4,
+            )
+            Spacer(Modifier.height(6.dp))
+        }
         if (chans.isEmpty()) {
-            Text(S.liveNoChannelsInCategory, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            item(key = "live-empty") {
+                Text(S.liveNoChannelsInCategory, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         } else {
-            LazyColumn(state = listState, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                itemsIndexed(chans, key = { _, c -> c.id }) { i, c ->
-                    val isLocked = "${c.providerId}:${c.remoteId}" in locked
-                    val nn = nowNext[c.id]
-                    ChannelRow(
-                        channel = c,
-                        position = i + 1,
-                        locked = isLocked,
-                        active = false,
-                        nowProgramme = nn?.first,
-                        nextProgramme = nn?.second,
-                        onFocus = {},
-                    ) {
-                        if (isLocked) pinPrompt = c
-                        else vm.resolveAndPlay(c, onPlay)
-                    }
+            itemsIndexed(chans, key = { _, c -> c.id }) { i, c ->
+                val isLocked = "${c.providerId}:${c.remoteId}" in locked
+                val nn = nowNext[c.id]
+                ChannelRow(
+                    channel = c,
+                    position = i + 1,
+                    locked = isLocked,
+                    active = false,
+                    nowProgramme = nn?.first,
+                    nextProgramme = nn?.second,
+                    onFocus = {},
+                ) {
+                    if (isLocked) pinPrompt = c
+                    else vm.resolveAndPlay(c, onPlay)
                 }
             }
         }
@@ -193,7 +199,10 @@ private fun LiveScreenWide(onPlay: (url: String, title: String) -> Unit, vm: Liv
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(start = 24.dp, bottom = 14.dp),
             )
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
                 item("__all__") {
                     CategoryRow(
                         label = S.liveAllChannels,
@@ -265,6 +274,7 @@ private fun LiveScreenWide(onPlay: (url: String, title: String) -> Unit, vm: Liv
                 )
             } else {
                 LazyColumn(
+                    modifier = Modifier.weight(1f),
                     state = listState,
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                     contentPadding = PaddingValues(end = 8.dp),
@@ -459,19 +469,25 @@ private fun LivePreviewPane(
     // MediaItem with a debounce when the focused channel changes, so D-pad
     // navigation doesn't hammer the network with stalker create_link calls.
     val miniPlayer = remember {
-        androidx.media3.exoplayer.ExoPlayer.Builder(context).build().apply {
-            playWhenReady = true
-            volume = 0f // Silent — audio belongs to the full player.
-        }
+        runCatching {
+            androidx.media3.exoplayer.ExoPlayer.Builder(context).build().apply {
+                playWhenReady = true
+                volume = 0f // Silent — audio belongs to the full player.
+            }
+        }.getOrNull()
     }
-    androidx.compose.runtime.DisposableEffect(Unit) {
-        onDispose { miniPlayer.release() }
+    androidx.compose.runtime.DisposableEffect(miniPlayer) {
+        onDispose { miniPlayer?.release() }
     }
     var resolvedUrl by remember { mutableStateOf<String?>(null) }
     var loading by remember(channel.id) { mutableStateOf(true) }
-    LaunchedEffect(channel.id) {
+    LaunchedEffect(channel.id, miniPlayer) {
         loading = true
         resolvedUrl = null
+        if (miniPlayer == null) {
+            loading = false
+            return@LaunchedEffect
+        }
         // 700 ms debounce: user is scrolling, don't hit the network on each
         // row. resolvePreviewUrl swallows Stalker `create_link` calls when
         // needed; for plain URLs it's a no-op.
@@ -480,8 +496,10 @@ private fun LivePreviewPane(
         resolvedUrl = url
         loading = false
         if (url != null) {
-            miniPlayer.setMediaItem(androidx.media3.common.MediaItem.fromUri(url))
-            miniPlayer.prepare()
+            runCatching {
+                miniPlayer.setMediaItem(androidx.media3.common.MediaItem.fromUri(url))
+                miniPlayer.prepare()
+            }
         }
     }
 
@@ -644,7 +662,7 @@ private fun DaySchedule(
     }
 
     val s = com.ultratv.tv.nativeapp.i18n.LocalStrings.current
-    Column(modifier.fillMaxWidth()) {
+    Column(modifier.fillMaxWidth().fillMaxHeight()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 s.liveDayScheduleEyebrow,
@@ -668,6 +686,7 @@ private fun DaySchedule(
         }
 
         androidx.compose.foundation.lazy.LazyColumn(
+            modifier = Modifier.weight(1f),
             state = listState,
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
