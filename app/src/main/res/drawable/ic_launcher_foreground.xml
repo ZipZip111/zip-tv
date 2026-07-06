@@ -6,10 +6,10 @@
     <!-- OwnTV mark: cyan play triangle inside a rounded square, kept within the adaptive safe zone. -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#22D3EE"
+        android:strokeColor="#9DFF4F"
         android:strokeWidth="4"
         android:pathData="M42,30 L66,30 A12,12 0 0 1 78,42 L78,66 A12,12 0 0 1 66,78 L42,78 A12,12 0 0 1 30,66 L30,42 A12,12 0 0 1 42,30 Z" />
     <path
-        android:fillColor="#22D3EE"
+        android:fillColor="#9DFF4F"
         android:pathData="M47,44 L68,54 L47,64 Z" />
 </vector>

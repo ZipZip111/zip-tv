@@ -21,9 +21,7 @@ import tv.own.owntv.ui.theme.AccentCyan
 import tv.own.owntv.ui.theme.OwnTVTheme
 
 /**
- * Theme-adaptive "OwnTV" wordmark. The provided logo asset has a near-white "Own" that vanishes on
- * AMOLED black, so the in-app lockup is drawn from brand tokens instead and stays legible on both
- * themes. The cyan play-mark and the "TV" accent are constant brand colors.
+ * Zip-TV wordmark — green play-mark (#9DFF4F) on theme-adaptive background.
  */
 @Composable
 fun BrandLockup(
@@ -59,10 +57,10 @@ fun BrandLockup(
         Text(
             text = buildAnnotatedString {
                 withStyle(androidx.compose.ui.text.SpanStyle(color = colors.textPrimary, fontWeight = FontWeight.Bold)) {
-                    append("Own")
+                    append("Zip")
                 }
                 withStyle(androidx.compose.ui.text.SpanStyle(color = AccentCyan, fontWeight = FontWeight.Bold)) {
-                    append("TV")
+                    append("-TV")
                 }
             },
             fontSize = textSize.sp,

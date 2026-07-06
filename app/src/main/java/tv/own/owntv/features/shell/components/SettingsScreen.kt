@@ -51,7 +51,8 @@ import tv.own.owntv.features.settings.ManageProfilesScreen
 import tv.own.owntv.features.settings.ManageSourcesScreen
 import tv.own.owntv.features.settings.SettingsViewModel
 import tv.own.owntv.features.settings.VideoPlayerSettingsScreen
-import tv.own.owntv.features.shell.MainSection
+import tv.own.owntv.ProductConfig
+import tv.own.owntv.ZipStrings
 import tv.own.owntv.ui.components.BrandLockup
 import tv.own.owntv.ui.components.BrowseMode
 import tv.own.owntv.ui.components.FocusableSurface
@@ -406,7 +407,7 @@ fun SettingsScreen(
         GroupLabel("App")
         SettingsRow(
             tone = TileTone.PRIMARY, icon = OwnTVIcon.DOWNLOADS,
-            title = "Check for updates", desc = "Get the latest version from GitHub Releases",
+            title = ZipStrings.checkUpdates, desc = ZipStrings.checkUpdatesDesc,
             chip = "v${tv.own.owntv.BuildConfig.VERSION_NAME}",
             onClick = { dialogReturn = updateRowFocus; showUpdate = true }, showChevron = true,
             modifier = Modifier.focusRequester(updateRowFocus),
@@ -420,7 +421,7 @@ fun SettingsScreen(
         )
         SettingsRow(
             tone = TileTone.SECONDARY, icon = OwnTVIcon.MENU,
-            title = "About", desc = "Version, license & project info",
+            title = ZipStrings.about, desc = ZipStrings.aboutDesc,
             onClick = { dialogReturn = aboutRowFocus; showAbout = true }, showChevron = true,
             modifier = Modifier.focusRequester(aboutRowFocus),
         )
@@ -648,10 +649,9 @@ private fun Swatch(
     }
 }
 
-private const val GITHUB_REPO = "github.com/ahXN00/OwnTV"
-private const val TELEGRAM_LINK = "t.me/owntvplayer"
+private val GITHUB_REPO = "github.com/${ProductConfig.GITHUB_REPO}"
 
-/** About OwnTV: version, license, author and project link — all readable on screen (no TV browser). */
+/** About Zip-TV: version, license, zip-dev.ru credit. */
 @Composable
 private fun AboutDialog(onDismiss: () -> Unit) {
     val colors = OwnTVTheme.colors
@@ -668,49 +668,23 @@ private fun AboutDialog(onDismiss: () -> Unit) {
         ) {
             BrandLockup(markSize = 48, textSize = 30)
             Spacer(Modifier.height(6.dp))
-            Text("Version ${tv.own.owntv.BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.titleMedium, color = colors.primary)
+            Text("Версия ${tv.own.owntv.BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.titleMedium, color = colors.primary)
             Spacer(Modifier.height(14.dp))
             Text(
-                "Your own IPTV player for Android TV — a free, open-source, player-only app. " +
-                    "It provides no channels or content; you bring your own legally accessible sources.",
+                ZipStrings.aboutBody,
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(14.dp))
-            Text("© 2026 Ashiq Hasan · GPLv3 License", style = MaterialTheme.typography.bodyMedium, color = colors.onSurface)
+            Text("© OwnTV (GPLv3) · ${ProductConfig.APP_DISPLAY_NAME}", style = MaterialTheme.typography.bodyMedium, color = colors.onSurface)
             Spacer(Modifier.height(4.dp))
             Text(GITHUB_REPO, style = MaterialTheme.typography.bodyMedium, color = colors.primary)
-            Spacer(Modifier.height(16.dp))
-            // Community: Telegram link + a QR, side-by-side to keep the dialog compact, so TV users can
-            // join from their phone — no TV browser needed.
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Column(Modifier.weight(1f)) {
-                    Text("Join us on Telegram", style = MaterialTheme.typography.titleSmall, color = colors.onSurface)
-                    Spacer(Modifier.height(2.dp))
-                    Text(TELEGRAM_LINK, style = MaterialTheme.typography.bodyMedium, color = colors.primary)
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        "Scan the QR to join from your phone, or open the link above.",
-                        style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant,
-                    )
-                }
-                Box(Modifier.clip(RoundedCornerShape(10.dp)).background(Color.White).padding(6.dp)) {
-                    Image(
-                        painter = androidx.compose.ui.res.painterResource(tv.own.owntv.R.drawable.telegram_qr),
-                        contentDescription = "Telegram group QR code",
-                        modifier = Modifier.size(120.dp),
-                    )
-                }
-            }
-            Spacer(Modifier.height(16.dp))
-            Text(
-                "Contributions, bug reports & stars are welcome on GitHub.",
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.onSurfaceVariant,
-            )
+            Spacer(Modifier.height(8.dp))
+            Text(ProductConfig.CREDIT_LABEL, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+            Text(ProductConfig.CREDIT_URL, style = MaterialTheme.typography.bodyMedium, color = colors.primary)
             Spacer(Modifier.height(20.dp))
-            OwnTVButton("Close", onClick = onDismiss, modifier = Modifier.focusRequester(focus))
+            OwnTVButton(ZipStrings.close, onClick = onDismiss, modifier = Modifier.focusRequester(focus))
         }
     }
 }

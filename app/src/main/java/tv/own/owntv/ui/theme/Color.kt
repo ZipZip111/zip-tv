@@ -10,8 +10,8 @@ import androidx.compose.ui.graphics.Color
  * the deep dark surface while keeping a subtle green undertone.
  */
 
-// Brand mark color (the OwnTV play logo) — constant.
-val AccentCyan = Color(0xFF52DBC8)
+// Brand mark — Zip-TV accent (#9DFF4F)
+val AccentCyan = Color(0xFF9DFF4F)
 
 // ---------------- DARK (M3 dark over near-black #040e0b) ----------------
 val DarkBackground = Color(0xFF040E0B) // Option A — nav + inter-panel gap surface

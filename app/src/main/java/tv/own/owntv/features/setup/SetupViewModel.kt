@@ -26,6 +26,9 @@ import tv.own.owntv.core.sync.work.CatalogSyncScheduler
 import tv.own.owntv.core.util.Pin
 import tv.own.owntv.core.util.friendlySyncError
 import tv.own.owntv.core.launcher.LauncherIntegrationRepository
+import tv.own.owntv.ProductConfig
+import tv.own.owntv.core.sync.SyncCounts
+import tv.own.owntv.ui.theme.AccentColor
 import tv.own.owntv.features.settings.data.PlaylistAutoRefresh
 import tv.own.owntv.features.settings.data.SettingsRepository
 import java.io.File
@@ -92,7 +95,7 @@ class SetupViewModel(
         viewModelScope.launch {
             createdProfileId = profileDao.insert(
                 ProfileEntity(
-                    name = name.ifBlank { "Profile" },
+                    name = name.ifBlank { ProductConfig.DEFAULT_PROFILE_NAME },
                     avatarColor = 0,
                     avatarId = avatarId,
                     isKids = isKids,
@@ -127,6 +130,82 @@ class SetupViewModel(
                 epgUrl = epgUrl.trim().takeIf { it.isNotBlank() },
             )
         }
+    }
+
+    /** Zip-TV first-run: import iptv-org presets sequentially without touching player/sync internals. */
+    fun bootstrapDefaultPlaylists() {
+        if (!ProductConfig.AUTO_BOOTSTRAP) return
+        importJob?.cancel()
+        val job = viewModelScope.launch {
+            _state.value = ImportState.Running
+            _progress.value = null
+            try {
+                if (!connectivity.isOnlineNow()) {
+                    _state.value = ImportState.Failed(friendlySyncError(null, online = false))
+                    return@launch
+                }
+                val profileId = createdProfileId.takeIf { it > 0 } ?: ensureFallbackProfile()
+                settings.setAccent(AccentColor.GREEN)
+                var total = SyncCounts(0, 0, 0, 0)
+                var firstSourceId: Long? = null
+                val warnings = mutableListOf<String>()
+                var failure: String? = null
+                for (preset in ProductConfig.BOOTSTRAP_PRESETS) {
+                    val source = sourceRepository.addM3uSource(
+                        profileId = profileId,
+                        name = preset.name,
+                        url = preset.playlistUrl,
+                        epgUrl = preset.epgUrl.takeIf { it.isNotBlank() },
+                    )
+                    if (firstSourceId == null) firstSourceId = source.id
+                    val freshSync = source.lastSyncAt == null
+                    when (val result = sourceRepository.sync(source, onProgress = { _progress.value = it })) {
+                        is SyncResult.Success -> {
+                            val counts = importFinalizer.finalize(source, deferIndexes = freshSync)
+                            total = SyncCounts(
+                                total.channels + counts.channels,
+                                total.movies + counts.movies,
+                                total.series + counts.series,
+                                total.epg + counts.epg,
+                            )
+                            result.warningSummary()?.let { warnings.add(it) }
+                        }
+                        is SyncResult.Failed -> {
+                            failure = result.message
+                            break
+                        }
+                        SyncResult.Cancelled -> {
+                            _state.value = ImportState.Idle
+                            return@launch
+                        }
+                    }
+                }
+                firstSourceId?.let { settings.setDefaultSource(it) }
+                catalogSyncScheduler.enqueueContentIndexBuild(reason = "zip_bootstrap")
+                runCatching { launcherIntegrationRepository.refreshProfile(profileId) }
+                val summary = listOf(total.summary(includeEpg = false), *warnings.toTypedArray()).joinToString("\n")
+                _state.value = failure?.let {
+                    ImportState.Failed(friendlySyncError(it, connectivity.isOnlineNow()))
+                } ?: ImportState.Success(summary)
+                val firstWithEpg = ProductConfig.BOOTSTRAP_PRESETS.firstOrNull { it.epgUrl.isNotBlank() }
+                if (firstWithEpg != null && failure == null) {
+                    sourceDao.getAllOnce().firstOrNull { it.url == firstWithEpg.playlistUrl }?.let { synced ->
+                        if (epgRepository.guideUrl(synced) != null) {
+                            pendingEpgSource = synced
+                            _epgSync.value = tv.own.owntv.features.settings.EpgSyncUi.Ask(synced.name)
+                        }
+                    }
+                }
+            } catch (c: CancellationException) {
+                _state.value = ImportState.Idle
+                _progress.value = null
+                throw c
+            } catch (e: Exception) {
+                _state.value = ImportState.Failed(friendlySyncError(e.message, connectivity.isOnlineNow()))
+            }
+        }
+        importJob = job
+        job.invokeOnCompletion { if (importJob == job) importJob = null }
     }
 
     fun startM3u(name: String, url: String, userAgent: String = "", epgUrl: String = "", autoRefresh: PlaylistAutoRefresh = PlaylistAutoRefresh.OFF) =

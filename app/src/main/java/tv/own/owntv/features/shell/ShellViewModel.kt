@@ -204,7 +204,7 @@ class ShellViewModel(
         .stateIn(viewModelScope, SharingStarted.Eagerly, tv.own.owntv.ui.theme.AnimationLevel.FULL)
 
     val accent: StateFlow<AccentColor> = settings.accent
-        .stateIn(viewModelScope, SharingStarted.Eagerly, AccentColor.TEAL)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, AccentColor.GREEN)
 
     /** Custom accent hex ("#52DBC8"); blank = the preset above is in effect. */
     val customAccent: StateFlow<String> = settings.customAccent

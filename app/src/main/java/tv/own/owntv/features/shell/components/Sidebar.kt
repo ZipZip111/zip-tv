@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import tv.own.owntv.ZipStrings
 import tv.own.owntv.features.shell.MainSection
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.NavAccentBar
@@ -351,7 +352,7 @@ private fun NavItem(
                 )
                 if (expanded) {
                     Text(
-                        text = section.label,
+                        text = ZipStrings.section(section),
                         style = MaterialTheme.typography.titleMedium,
                         color = ladder.content,
                         maxLines = 1,

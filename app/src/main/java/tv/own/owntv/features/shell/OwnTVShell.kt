@@ -31,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
+import tv.own.owntv.ZipStrings
 import tv.own.owntv.core.launcher.LauncherDeepLink
 import tv.own.owntv.core.launcher.LauncherIntegrationRepository
 import tv.own.owntv.core.launcher.LauncherLaunch
@@ -306,7 +307,7 @@ fun OwnTVShell(
                 // Phase 5 — top bar above the content (active section + Search pill + clock + playlist).
                 // Shown on EVERY section now, including Settings ("top bar same for all").
                 TopBar(
-                    sectionLabel = selectedSection.label,
+                    sectionLabel = ZipStrings.section(selectedSection),
                     onSearchClick = { onSelectSection(MainSection.SEARCH) },
                     // The chip reflects the active filter: "All playlists" when none is chosen (id <= 0),
                     // the chosen playlist's name otherwise. With a single playlist there's nothing to switch,

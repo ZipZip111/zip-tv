@@ -44,10 +44,10 @@ enum class AccentColor(
     ),
     GREEN(
         "Green",
-        primaryDark = Color(0xFF6FDB94), onPrimaryDark = Color(0xFF00391C),
-        primaryContainerDark = Color(0xFF1F5135), onPrimaryContainerDark = Color(0xFF8BF8AF),
-        primaryLight = Color(0xFF1B6B3F), onPrimaryLight = Color(0xFFFFFFFF),
-        primaryContainerLight = Color(0xFFA6F2C0), onPrimaryContainerLight = Color(0xFF00210F),
+        primaryDark = Color(0xFF9DFF4F), onPrimaryDark = Color(0xFF1A3300),
+        primaryContainerDark = Color(0xFF2D4A12), onPrimaryContainerDark = Color(0xFFB8FF8A),
+        primaryLight = Color(0xFF4A8F1A), onPrimaryLight = Color(0xFFFFFFFF),
+        primaryContainerLight = Color(0xFFD4FFB0), onPrimaryContainerLight = Color(0xFF0F2000),
     ),
     AMBER(
         "Amber",

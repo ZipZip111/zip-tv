@@ -50,9 +50,9 @@ class UpdateManager(
         scope.launch {
             runCatching {
                 val request = Request.Builder()
-                    .url("https://api.github.com/repos/$REPO/releases/latest")
+                    .url("https://api.github.com/repos/${BuildConfig.GITHUB_REPO}/releases/latest")
                     .header("Accept", "application/vnd.github+json")
-                    .header("User-Agent", "OwnTV")
+                    .header("User-Agent", "Zip-TV")
                     .build()
                 client.newCall(request).execute().use { resp ->
                     if (!resp.isSuccessful) error("GitHub responded ${resp.code}")
@@ -87,8 +87,8 @@ class UpdateManager(
         scope.launch {
             runCatching {
                 val dir = File(context.filesDir, "updates").apply { mkdirs() }
-                val out = File(dir, "owntv-update.apk")
-                val request = Request.Builder().url(info.apkUrl).header("User-Agent", "OwnTV").build()
+                val out = File(dir, "ziptv-update.apk")
+                val request = Request.Builder().url(info.apkUrl).header("User-Agent", "Zip-TV").build()
                 client.newCall(request).execute().use { resp ->
                     if (!resp.isSuccessful) error("Download failed (${resp.code})")
                     val body = resp.body ?: error("Empty download")
@@ -139,6 +139,7 @@ class UpdateManager(
     }
 
     companion object {
-        const val REPO = "ahXN00/OwnTV"
+        /** @deprecated use [BuildConfig.GITHUB_REPO] */
+        const val REPO = "ZipZip111/zip-tv"
     }
 }
