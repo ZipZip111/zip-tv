@@ -1,6 +1,8 @@
 package com.ultratv.tv.nativeapp.ui.live
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -53,7 +55,10 @@ import androidx.compose.ui.graphics.Brush
 import com.ultratv.tv.nativeapp.ui.theme.UltraFonts
 import com.ultratv.tv.nativeapp.ui.theme.UltraTokens
 import com.ultratv.tv.nativeapp.ui.components.UltraIcon
+import com.ultratv.tv.nativeapp.ui.common.CategoryChips
 import com.ultratv.tv.nativeapp.ui.common.ChannelLogo
+import com.ultratv.tv.nativeapp.ui.common.FormFactor
+import com.ultratv.tv.nativeapp.ui.common.rememberFormFactor
 
 /**
  * Tivimate-inspired Live TV layout. Two stacked panes:
@@ -73,6 +78,91 @@ import com.ultratv.tv.nativeapp.ui.common.ChannelLogo
 @OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
 @Composable
 fun LiveScreen(onPlay: (url: String, title: String) -> Unit, vm: LiveViewModel = hiltViewModel()) {
+    when (rememberFormFactor()) {
+        FormFactor.Expanded -> LiveScreenWide(onPlay = onPlay, vm = vm)
+        else -> LiveScreenCompact(onPlay = onPlay, vm = vm)
+    }
+}
+
+/** Phone / narrow: chips + channel list — tap opens the player. */
+@OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
+@Composable
+private fun LiveScreenCompact(onPlay: (url: String, title: String) -> Unit, vm: LiveViewModel) {
+    val cats by vm.categories.collectAsState()
+    val chans by vm.channels.collectAsState()
+    val selected by vm.selectedCategory.collectAsState()
+    val locked by vm.lockedChannels.collectAsState()
+    val nowNext by vm.nowNext.collectAsState()
+    var pinPrompt by remember { mutableStateOf<com.ultratv.tv.nativeapp.data.db.ChannelEntity?>(null) }
+    val S = com.ultratv.tv.nativeapp.i18n.LocalStrings.current
+    val listState = rememberLazyListState()
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    ) {
+        Text(
+            S.navLive,
+            fontFamily = UltraFonts.Serif,
+            fontSize = 28.sp,
+            color = UltraTokens.Fg,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Spacer(Modifier.height(8.dp))
+        CategoryChips(
+            categories = cats,
+            selected = if (selected == CATEGORY_ALL) null else selected,
+            onSelect = { vm.selectCategory(it ?: CATEGORY_ALL) },
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            S.liveChannelsCountTemplate.format(chans.size),
+            fontFamily = UltraFonts.Mono,
+            fontSize = 11.sp,
+            color = UltraTokens.Fg4,
+        )
+        Spacer(Modifier.height(6.dp))
+        if (chans.isEmpty()) {
+            Text(S.liveNoChannelsInCategory, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        } else {
+            LazyColumn(state = listState, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                itemsIndexed(chans, key = { _, c -> c.id }) { i, c ->
+                    val isLocked = "${c.providerId}:${c.remoteId}" in locked
+                    val nn = nowNext[c.id]
+                    ChannelRow(
+                        channel = c,
+                        position = i + 1,
+                        locked = isLocked,
+                        active = false,
+                        nowProgramme = nn?.first,
+                        nextProgramme = nn?.second,
+                        onFocus = {},
+                    ) {
+                        if (isLocked) pinPrompt = c
+                        else vm.resolveAndPlay(c, onPlay)
+                    }
+                }
+            }
+        }
+    }
+
+    pinPrompt?.let { ch ->
+        com.ultratv.tv.nativeapp.ui.parental.PinPromptDialog(
+            title = "🔒 ${ch.name}",
+            onUnlocked = {
+                pinPrompt = null
+                vm.resolveAndPlay(ch, onPlay)
+            },
+            onCancel = { pinPrompt = null },
+        )
+    }
+}
+
+/** TV / tablet wide: TiviMate-style three-pane layout. */
+@OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
+@Composable
+private fun LiveScreenWide(onPlay: (url: String, title: String) -> Unit, vm: LiveViewModel) {
     val cats by vm.categories.collectAsState()
     val chans by vm.channels.collectAsState()
     val selected by vm.selectedCategory.collectAsState()
@@ -85,7 +175,7 @@ fun LiveScreen(onPlay: (url: String, title: String) -> Unit, vm: LiveViewModel =
     val S = com.ultratv.tv.nativeapp.i18n.LocalStrings.current
     val ruUi = S.navHome == "Главная"
 
-    Row(Modifier.fillMaxSize().padding(top = 76.dp)) {
+    Row(Modifier.fillMaxSize()) {
         // ---- Left pane: categories (200 dp — compact, focus-only) ----
         Column(
             modifier = Modifier
@@ -246,29 +336,23 @@ private fun CategoryRow(label: String, selected: Boolean, onClick: () -> Unit) {
     val focused by interaction.collectIsFocusedAsState()
     val highlighted = selected || focused
     Box {
-        Card(
-            onClick = onClick,
-            interactionSource = interaction,
-            shape = CardDefaults.shape(RoundedCornerShape(0.dp)),
-            colors = CardDefaults.colors(
-                containerColor = if (highlighted) UltraTokens.AccentSoft else Color.Transparent,
-            ),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusable(interactionSource = interaction)
+                .clickable(interactionSource = interaction, indication = null, onClick = onClick)
+                .background(if (highlighted) UltraTokens.AccentSoft else Color.Transparent)
+                .padding(horizontal = 24.dp, vertical = 13.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 13.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    label,
-                    fontSize = 14.sp,
-                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                    color = if (highlighted) UltraTokens.Fg else UltraTokens.Fg3,
-                    maxLines = 1,
-                )
-            }
+            Text(
+                label,
+                fontSize = 14.sp,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                color = if (highlighted) UltraTokens.Fg else UltraTokens.Fg3,
+                maxLines = 1,
+            )
         }
         if (selected) {
             Box(
@@ -301,63 +385,56 @@ private fun ChannelRow(
     // user is hovering, OTT-Navigator style.
     LaunchedEffect(focused) { if (focused) onFocus() }
     val highlight = focused || active
-    Card(
-        onClick = onClick,
-        interactionSource = interaction,
-        shape = CardDefaults.shape(RoundedCornerShape(0.dp)),
-        colors = com.ultratv.tv.nativeapp.ui.theme.ultraCardColors(
-            containerColor = if (highlight) UltraTokens.AccentSoft else Color.Transparent,
-            focusedContainerColor = UltraTokens.AccentSoft,
-        ),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusable(interactionSource = interaction)
+            .clickable(interactionSource = interaction, indication = null, onClick = onClick)
+            .background(if (highlight) UltraTokens.AccentSoft else Color.Transparent)
+            .padding(horizontal = 24.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        Text(
+            "%02d".format(position),
+            color = if (highlight) UltraTokens.Accent else UltraTokens.Fg4,
+            fontSize = 13.sp,
+            fontFamily = UltraFonts.Mono,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.width(32.dp),
+        )
+        Box(
+            Modifier
+                .size(44.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color.Black),
+            contentAlignment = Alignment.Center,
         ) {
-            Text(
-                "%02d".format(position),
-                color = if (highlight) UltraTokens.Accent else UltraTokens.Fg4,
-                fontSize = 13.sp,
-                fontFamily = UltraFonts.Mono,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.width(32.dp),
-            )
-            Box(
-                Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color.Black),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (channel.logo != null) {
-                    AsyncImage(model = channel.logo, contentDescription = channel.name, modifier = Modifier.fillMaxSize())
-                } else {
-                    com.ultratv.tv.nativeapp.ui.common.LetterAvatar(
-                        text = channel.name, fontSize = 16.sp, modifier = Modifier.fillMaxSize(),
-                    )
-                }
+            if (channel.logo != null) {
+                AsyncImage(model = channel.logo, contentDescription = channel.name, modifier = Modifier.fillMaxSize())
+            } else {
+                com.ultratv.tv.nativeapp.ui.common.LetterAvatar(
+                    text = channel.name, fontSize = 16.sp, modifier = Modifier.fillMaxSize(),
+                )
             }
-            Column(Modifier.fillMaxWidth()) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        channel.name + if (locked) "  🔒" else "",
-                        color = if (highlight) UltraTokens.Fg else UltraTokens.Fg2,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        maxLines = 1,
-                    )
-                }
-                if (nowProgramme != null) {
-                    Text(
-                        nowProgramme.title + (nextProgramme?.let { "  ·  puis ${it.title}" } ?: ""),
-                        color = UltraTokens.Fg3,
-                        fontSize = 11.sp,
-                        maxLines = 1,
-                    )
-                }
+        }
+        Column(Modifier.fillMaxWidth()) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    channel.name + if (locked) "  🔒" else "",
+                    color = if (highlight) UltraTokens.Fg else UltraTokens.Fg2,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                )
+            }
+            if (nowProgramme != null) {
+                Text(
+                    nowProgramme.title + (nextProgramme?.let { "  ·  puis ${it.title}" } ?: ""),
+                    color = UltraTokens.Fg3,
+                    fontSize = 11.sp,
+                    maxLines = 1,
+                )
             }
         }
     }
@@ -630,21 +707,17 @@ private fun ScheduleRow(
         past -> UltraTokens.Fg4
         else -> UltraTokens.Fg2
     }
-    Card(
-        onClick = onClick,
-        shape = CardDefaults.shape(RoundedCornerShape(10.dp)),
-        colors = com.ultratv.tv.nativeapp.ui.theme.ultraCardColors(
-            containerColor = if (isCurrent) UltraTokens.AccentSoft else Color.Transparent,
-            focusedContainerColor = if (isCurrent) UltraTokens.Accent else UltraTokens.AccentSoft,
-            focusedContentColor = if (isCurrent) Color.White else UltraTokens.Fg,
-        ),
+    val interaction = remember { MutableInteractionSource() }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .focusable(interactionSource = interaction)
+            .clickable(interactionSource = interaction, indication = null, onClick = onClick)
+            .background(if (isCurrent) UltraTokens.AccentSoft else Color.Transparent)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
             Text(
                 formatHm(prog.startMs),
                 color = timeColor,
@@ -664,29 +737,23 @@ private fun ScheduleRow(
             // builds the catchup URL and starts the player.
             if (past && canCatchup) {
                 Spacer(Modifier.weight(1f))
-                androidx.tv.material3.Card(
-                    onClick = onCatchup,
-                    shape = CardDefaults.shape(RoundedCornerShape(4.dp)),
-                    colors = com.ultratv.tv.nativeapp.ui.theme.ultraCardColors(
-                        containerColor = UltraTokens.AccentSoft,
-                        focusedContainerColor = UltraTokens.Accent,
-                        focusedContentColor = Color.White,
-                    ),
+                Row(
+                    Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .clickable(onClick = onCatchup)
+                        .background(UltraTokens.AccentSoft)
+                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Row(
-                        Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text("▶", color = UltraTokens.Accent, fontSize = 11.sp)
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            "REPRISE",
-                            color = UltraTokens.Accent,
-                            fontSize = 9.sp,
-                            letterSpacing = 0.6.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
+                    Text("▶", color = UltraTokens.Accent, fontSize = 11.sp)
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        "REPRISE",
+                        color = UltraTokens.Accent,
+                        fontSize = 9.sp,
+                        letterSpacing = 0.6.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
                 }
             } else if (isCurrent) {
                 Spacer(Modifier.weight(1f))
@@ -706,32 +773,25 @@ private fun ScheduleRow(
                 }
             } else if (future) {
                 Spacer(Modifier.weight(1f))
-                androidx.tv.material3.Card(
-                    onClick = onRemind,
-                    shape = CardDefaults.shape(RoundedCornerShape(4.dp)),
-                    colors = com.ultratv.tv.nativeapp.ui.theme.ultraCardColors(
-                        containerColor = Color.Transparent,
-                        focusedContainerColor = UltraTokens.AccentSoft,
-                    ),
+                Row(
+                    Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .clickable(onClick = onRemind)
+                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Row(
-                        Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text("⏰", fontSize = 11.sp)
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            "RAPPEL",
-                            color = UltraTokens.Fg3,
-                            fontSize = 9.sp,
-                            letterSpacing = 0.6.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
+                    Text("⏰", fontSize = 11.sp)
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        "RAPPEL",
+                        color = UltraTokens.Fg3,
+                        fontSize = 9.sp,
+                        letterSpacing = 0.6.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
                 }
             }
         }
-    }
 }
 
 @Composable
