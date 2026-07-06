@@ -39,6 +39,7 @@ import com.ultratv.tv.nativeapp.ui.categories.CategoriesScreen
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.ultratv.tv.nativeapp.ui.common.FormFactor
 import com.ultratv.tv.nativeapp.ui.common.rememberFormFactor
+import com.ultratv.tv.nativeapp.ui.common.ToasterHost
 import com.ultratv.tv.nativeapp.ui.components.BottomBarNav
 import com.ultratv.tv.nativeapp.ui.components.SidebarNav
 import com.ultratv.tv.nativeapp.ui.components.TopBarNav
@@ -264,7 +265,7 @@ private fun UltraTvAppRoot(sidebarPosition: SidebarPosition) {
                     onOpenSettings = { },
                 )
             }
-            com.ultratv.tv.nativeapp.ui.common.ToasterHost()
+            ToasterHost()
         }
     }
 }
