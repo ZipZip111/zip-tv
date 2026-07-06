@@ -57,8 +57,7 @@ import com.ultratv.tv.nativeapp.ui.theme.UltraTokens
 import com.ultratv.tv.nativeapp.ui.components.UltraIcon
 import com.ultratv.tv.nativeapp.ui.common.CategoryChips
 import com.ultratv.tv.nativeapp.ui.common.ChannelLogo
-import com.ultratv.tv.nativeapp.ui.common.FormFactor
-import com.ultratv.tv.nativeapp.ui.common.rememberFormFactor
+import com.ultratv.tv.nativeapp.ui.common.rememberIsTelevision
 
 /**
  * Tivimate-inspired Live TV layout. Two stacked panes:
@@ -78,9 +77,11 @@ import com.ultratv.tv.nativeapp.ui.common.rememberFormFactor
 @OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
 @Composable
 fun LiveScreen(onPlay: (url: String, title: String) -> Unit, vm: LiveViewModel = hiltViewModel()) {
-    when (rememberFormFactor()) {
-        FormFactor.Expanded -> LiveScreenWide(onPlay = onPlay, vm = vm)
-        else -> LiveScreenCompact(onPlay = onPlay, vm = vm)
+    // BlueStacks / phones / tablets: touch + mouse — never the TV three-pane layout.
+    if (rememberIsTelevision()) {
+        LiveScreenWide(onPlay = onPlay, vm = vm)
+    } else {
+        LiveScreenCompact(onPlay = onPlay, vm = vm)
     }
 }
 
