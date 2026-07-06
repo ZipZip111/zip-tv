@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ultratv.tv.nativeapp.ProductConfig
 import com.ultratv.tv.nativeapp.data.config.DeviceMac
 import com.ultratv.tv.nativeapp.data.prefs.UserPreferencesStore
 import com.ultratv.tv.nativeapp.data.repo.ProviderRepository
@@ -61,7 +62,9 @@ class OnboardingViewModel @Inject constructor(
 
     val show: StateFlow<Boolean> = kotlinx.coroutines.flow.combine(
         prefs.flow, provider.observeProviders(),
-    ) { p, ps -> !p.hasSeenOnboarding && ps.isEmpty() }
+    ) { p, ps ->
+        !ProductConfig.AUTO_BOOTSTRAP_IPTV_ORG && !p.hasSeenOnboarding && ps.isEmpty()
+    }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     fun dismiss() {
@@ -87,7 +90,7 @@ fun OnboardingWizard(
         Box(
             Modifier.fillMaxSize().background(
                 Brush.radialGradient(
-                    colors = listOf(Color(0x553A0A26), Color.Transparent),
+                    colors = listOf(Color(0x559DFF4F), Color.Transparent),
                     center = Offset(1632f, 324f),
                     radius = 900f,
                 )
@@ -96,7 +99,7 @@ fun OnboardingWizard(
         Box(
             Modifier.fillMaxSize().background(
                 Brush.radialGradient(
-                    colors = listOf(Color(0x442A1A55), Color.Transparent),
+                    colors = listOf(Color(0x442A5520), Color.Transparent),
                     center = Offset(288f, 864f),
                     radius = 800f,
                 )
@@ -113,7 +116,7 @@ fun OnboardingWizard(
                     .background(Brush.linearGradient(listOf(UltraTokens.Accent, UltraTokens.Accent2))),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("▶", color = Color.Black, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text("Z", color = Color.Black, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.width(14.dp))
             Column {
@@ -193,7 +196,7 @@ private fun WelcomeStep(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            "ÉTAPE 1 SUR 3 · BIENVENUE",
+            S.wizardStepWelcome,
             color = UltraTokens.Accent,
             fontSize = 13.sp,
             letterSpacing = 2.3.sp,
@@ -246,7 +249,7 @@ private fun ProviderStep(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            "ÉTAPE 2 SUR 3 · SOURCES",
+            S.wizardStepSources,
             color = UltraTokens.Accent,
             fontSize = 13.sp,
             letterSpacing = 2.3.sp,
@@ -289,7 +292,7 @@ private fun ProviderStep(
                         .padding(horizontal = 10.dp, vertical = 4.dp),
                 ) {
                     Text(
-                        "RECOMMANDÉ",
+                        S.wizardRecommended,
                         color = Color.White,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
@@ -298,7 +301,7 @@ private fun ProviderStep(
                 }
                 Spacer(Modifier.height(14.dp))
                 Text(
-                    "OPTION A · CLOUD",
+                    S.wizardOptionCloud,
                     color = UltraTokens.Accent,
                     fontSize = 11.sp,
                     letterSpacing = 2.3.sp,
@@ -419,7 +422,7 @@ private fun DoneStep(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            "ÉTAPE 3 SUR 3 · PRÊT",
+            S.wizardStepReady,
             color = UltraTokens.Accent,
             fontSize = 13.sp,
             letterSpacing = 2.3.sp,

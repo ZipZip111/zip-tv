@@ -187,12 +187,15 @@ private fun Root(vm: AppViewModel = hiltViewModel()) {
         androidx.compose.ui.platform.LocalLayoutDirection provides direction,
     ) {
         UltraTvTheme(theme = prefs.theme) {
-            UltraTvAppRoot(prefs.sidebarPosition)
-            // First-run wizard renders itself as a full-screen overlay only
-            // when no provider is configured AND the user hasn't dismissed it.
-            com.ultratv.tv.nativeapp.ui.onboarding.OnboardingWizard(
-                onOpenSettings = { /* user can re-enter Settings via sidebar */ },
-            )
+            Box(Modifier.fillMaxSize()) {
+                UltraTvAppRoot(prefs.sidebarPosition)
+                com.ultratv.tv.nativeapp.ui.setup.SetupOverlay()
+                if (!com.ultratv.tv.nativeapp.ProductConfig.AUTO_BOOTSTRAP_IPTV_ORG) {
+                    com.ultratv.tv.nativeapp.ui.onboarding.OnboardingWizard(
+                        onOpenSettings = { /* user can re-enter Settings via sidebar */ },
+                    )
+                }
+            }
         }
     }
 }

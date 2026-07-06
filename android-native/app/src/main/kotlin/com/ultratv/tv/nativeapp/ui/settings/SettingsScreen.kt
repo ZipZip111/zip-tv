@@ -161,7 +161,7 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
-            "RÉGLAGES",
+            S.settingsEyebrow,
             color = T.Fg3,
             fontSize = 11.sp,
             letterSpacing = 2.3.sp,
@@ -201,7 +201,7 @@ fun SettingsScreen(
             checkMsg?.let { Text(it, color = T.Fg3, fontSize = 13.sp) }
             if (updateInfo != null) {
                 Text(
-                    "v${updateInfo!!.versionName} prête à installer",
+                    S.settingsUpdateReady.format(updateInfo!!.versionName),
                     color = T.Accent,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
@@ -210,7 +210,8 @@ fun SettingsScreen(
         }
         Spacer(Modifier.height(16.dp))
 
-        // ---- 1. MAC + cloud sync ----
+        // ---- 1. MAC + cloud sync (optional) ----
+        if (com.ultratv.tv.nativeapp.ProductConfig.SHOW_CLOUD_SYNC) {
         SectionCard {
             Text(S.settingsAutoImportTitle, color = MaterialTheme.colorScheme.primary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -255,6 +256,7 @@ fun SettingsScreen(
                 onClick = { vm.importByMac(workerBase.trim()) },
                 enabled = !syncing && workerBase.isNotBlank(),
             ) { Text(if (syncing) S.settingsSyncing else S.settingsSyncFromCloud, fontSize = 15.sp) }
+        }
         }
 
         // ---- 2. iptv-org catalog ----
@@ -409,6 +411,12 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp,
             )
         }
+        Text(
+            "Zip-TV · сайт разработан zip-dev.ru",
+            color = T.Accent,
+            fontSize = 13.sp,
+            modifier = Modifier.padding(top = 8.dp),
+        )
         Spacer(Modifier.height(12.dp))
     }
 

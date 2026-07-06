@@ -1,6 +1,7 @@
 package com.ultratv.tv.nativeapp.data.prefs
 
 import android.content.Context
+import com.ultratv.tv.nativeapp.ProductConfig
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -21,9 +22,9 @@ enum class DefaultPlayer { INTERNAL, EXTERNAL }
 
 data class UserPrefs(
     val sidebarPosition: SidebarPosition = SidebarPosition.LEFT,
-    val theme: AppTheme = AppTheme.DARK,
+    val theme: AppTheme = AppTheme.AMOLED,
     val defaultPlayer: DefaultPlayer = DefaultPlayer.INTERNAL,
-    val autoSyncOnLaunch: Boolean = false,
+    val autoSyncOnLaunch: Boolean = true,
     val showChannelNumbers: Boolean = true,
     val hideAdultCategories: Boolean = false,
     val resumePlayback: Boolean = true,
@@ -44,7 +45,7 @@ data class UserPrefs(
      *  dismisses or completes it. */
     val hasSeenOnboarding: Boolean = false,
     /** UI language code: "system", "en", "fr", "es", "ar". */
-    val language: String = "system",
+    val language: String = ProductConfig.DEFAULT_LANGUAGE,
     /** Per-MAC password used when fetching config from the worker. Optional —
      *  empty for unprotected entries. Persists across launches; never logged. */
     val configPassword: String = "",
@@ -52,7 +53,7 @@ data class UserPrefs(
      *  silently. Defaults to true because the app surfaces this in Settings
      *  and the diagnostic flow is what keeps the redesign honest; flipping
      *  it off stops the dashboard cold for that install. */
-    val telemetryEnabled: Boolean = true,
+    val telemetryEnabled: Boolean = ProductConfig.DEFAULT_TELEMETRY,
 
     // Playback / TV-quality knobs — exposed in Settings.
     /** Buffer target in seconds. Media3's default is 15 s, which is decent but
@@ -103,9 +104,9 @@ class UserPreferencesStore @Inject constructor(@ApplicationContext private val c
     val flow: Flow<UserPrefs> = ctx.userPrefsDs.data.map { p ->
         UserPrefs(
             sidebarPosition = enumValueOf<SidebarPosition>(p[Keys.sidebar] ?: SidebarPosition.LEFT.name),
-            theme = enumValueOf<AppTheme>(p[Keys.theme] ?: AppTheme.DARK.name),
+            theme = enumValueOf<AppTheme>(p[Keys.theme] ?: AppTheme.AMOLED.name),
             defaultPlayer = enumValueOf<DefaultPlayer>(p[Keys.player] ?: DefaultPlayer.INTERNAL.name),
-            autoSyncOnLaunch = p[Keys.autoSync] ?: false,
+            autoSyncOnLaunch = p[Keys.autoSync] ?: true,
             showChannelNumbers = p[Keys.channelNums] ?: true,
             hideAdultCategories = p[Keys.hideAdult] ?: false,
             resumePlayback = p[Keys.resume] ?: true,
@@ -116,9 +117,9 @@ class UserPreferencesStore @Inject constructor(@ApplicationContext private val c
             lastSyncAtMs = p[Keys.lastSyncAt] ?: 0L,
             workerBaseUrl = p[Keys.workerBase] ?: "",
             hasSeenOnboarding = p[Keys.seenOnboarding] ?: false,
-            language = p[Keys.language] ?: "system",
+            language = p[Keys.language] ?: ProductConfig.DEFAULT_LANGUAGE,
             configPassword = p[Keys.configPassword] ?: "",
-            telemetryEnabled = p[Keys.telemetry] ?: true,
+            telemetryEnabled = p[Keys.telemetry] ?: ProductConfig.DEFAULT_TELEMETRY,
             bufferSeconds = p[Keys.bufferSec] ?: 30,
             autoFrameRate = p[Keys.autoFrameRate] ?: true,
             preferSoftwareDecoder = p[Keys.preferSwDec] ?: false,

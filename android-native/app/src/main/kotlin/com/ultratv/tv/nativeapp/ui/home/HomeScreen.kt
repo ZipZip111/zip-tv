@@ -73,11 +73,11 @@ fun HomeScreen(
         val heroItem = series.firstOrNull() ?: movies.firstOrNull()
         if (heroItem != null) {
             HeroBanner(
-                eyebrow = "À l'affiche · Nouvelle saison",
+                eyebrow = S.homeHeroEyebrow,
                 title = (heroItem as? com.ultratv.tv.nativeapp.data.db.SeriesEntity)?.name
                     ?: (heroItem as? com.ultratv.tv.nativeapp.data.db.MovieEntity)?.name
                     ?: S.homeWelcome,
-                subtitle = "Une œuvre dense, lumineuse, qui prend le temps de regarder ses personnages comme on regarderait des paysages.",
+                subtitle = S.homeSubtitle,
                 image = (heroItem as? com.ultratv.tv.nativeapp.data.db.SeriesEntity)?.poster
                     ?: (heroItem as? com.ultratv.tv.nativeapp.data.db.MovieEntity)?.poster,
                 rating = 96,
@@ -91,7 +91,7 @@ fun HomeScreen(
                         is com.ultratv.tv.nativeapp.data.db.MovieEntity -> onOpenMovie(heroItem.id)
                     }
                 },
-                secondaryLabel = "Plus d'infos",
+                secondaryLabel = S.homeMoreInfo,
                 onSecondary = {
                     when (heroItem) {
                         is com.ultratv.tv.nativeapp.data.db.SeriesEntity -> onOpenSeries(heroItem.id)
@@ -108,7 +108,7 @@ fun HomeScreen(
                                 channelShort = null,
                                 hueSeed = c.name.hashCode(),
                                 hd = null,
-                                nowTitle = "En cours",
+                                nowTitle = S.homeOnNow,
                                 endsInMinutes = 30,
                             )
                         },
@@ -123,7 +123,7 @@ fun HomeScreen(
                     .padding(start = UltraTokens.EdgeGutter, top = 60.dp, end = UltraTokens.EdgeGutter),
             ) {
                 Text(
-                    "Bienvenue.",
+                    S.homeWelcomeHero,
                     fontFamily = UltraFonts.Serif,
                     fontSize = 84.sp,
                     lineHeight = 84.sp,
@@ -165,7 +165,11 @@ fun HomeScreen(
         // Onboarding card when no provider is configured
         if (providers.isEmpty()) {
             Box(Modifier.padding(horizontal = UltraTokens.EdgeGutter)) {
-                MacOnboardingCard(mac = vm.mac, onGoSettings = onGoSettings)
+                if (com.ultratv.tv.nativeapp.ProductConfig.SHOW_CLOUD_SYNC) {
+                    MacOnboardingCard(mac = vm.mac, onGoSettings = onGoSettings)
+                } else {
+                    QuickStartCard(onGoLive = onGoLive, onGoSettings = onGoSettings)
+                }
             }
             Spacer(Modifier.height(20.dp))
         }
@@ -174,7 +178,7 @@ fun HomeScreen(
         if (continueW.isNotEmpty()) {
             ContentRail(
                 title = S.homeContinueWatching,
-                eyebrow = "Pour vous",
+                eyebrow = S.homeForYou,
                 cardWidth = 300.dp,
                 items = continueW,
                 itemKey = { "h-${it.kind}-${it.remoteId}" },
@@ -219,7 +223,7 @@ fun HomeScreen(
         if (movies.isNotEmpty()) {
             ContentRail(
                 title = S.homeFeaturedMovies,
-                eyebrow = "Cinéma",
+                eyebrow = S.homeCinemaEyebrow,
                 items = movies,
                 itemKey = { it.id },
             ) { m ->
@@ -234,7 +238,7 @@ fun HomeScreen(
         if (series.isNotEmpty()) {
             ContentRail(
                 title = S.seriesTitle,
-                eyebrow = "Séries",
+                eyebrow = S.homeSeriesEyebrow,
                 items = series,
                 itemKey = { it.id },
             ) { s ->
@@ -249,7 +253,7 @@ fun HomeScreen(
         if (channels.isNotEmpty()) {
             ContentRail(
                 title = S.homeFeaturedChannels,
-                eyebrow = "En direct",
+                eyebrow = S.homeLiveEyebrow,
                 items = channels,
                 itemKey = { it.id },
                 cardWidth = 260.dp,
@@ -257,7 +261,7 @@ fun HomeScreen(
                 PosterCard(
                     title = c.name,
                     poster = c.logo,
-                    subtitle = "Live",
+                    subtitle = S.live,
                     aspect = 16f / 9f,
                 ) { onPlay(c.streamUrl, c.name) }
             }
@@ -334,6 +338,51 @@ private fun ContinueActions(
 
 @OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
 @Composable
+private fun QuickStartCard(onGoLive: () -> Unit, onGoSettings: () -> Unit) {
+    val S = com.ultratv.tv.nativeapp.i18n.LocalStrings.current
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(
+                Brush.linearGradient(
+                    listOf(UltraTokens.AccentTint, UltraTokens.AccentGhost)
+                )
+            )
+            .border(1.dp, UltraTokens.AccentBorder, RoundedCornerShape(16.dp))
+            .padding(22.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text(
+            S.homeQuickStartTitle,
+            fontFamily = UltraFonts.Serif,
+            fontSize = 28.sp,
+            color = UltraTokens.Fg,
+        )
+        Text(
+            S.homeQuickStartHint,
+            color = UltraTokens.Fg3,
+            fontSize = 14.sp,
+            lineHeight = 20.sp,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Button(
+                onClick = onGoLive,
+                colors = ButtonDefaults.colors(
+                    containerColor = UltraTokens.CtaBg,
+                    contentColor = UltraTokens.CtaFgOnCta,
+                ),
+            ) { Text("▶  " + S.homeGoLive, fontWeight = FontWeight.SemiBold) }
+            Button(
+                onClick = onGoSettings,
+                colors = ButtonDefaults.colors(containerColor = UltraTokens.Surface2),
+            ) { Text(S.onboardingOpenSettings, color = UltraTokens.Fg2) }
+        }
+    }
+}
+
+@OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
+@Composable
 private fun MacOnboardingCard(mac: String, onGoSettings: () -> Unit) {
     val S = com.ultratv.tv.nativeapp.i18n.LocalStrings.current
     Column(
@@ -375,12 +424,6 @@ private fun MacOnboardingCard(mac: String, onGoSettings: () -> Unit) {
                 containerColor = UltraTokens.CtaBg,
                 contentColor = UltraTokens.CtaFgOnCta,
             ),
-        ) { Text(S.onboardingOpenSettings, fontWeight = FontWeight.SemiBold) }
+        ) { Text(S.onboardingOpenSettings, fontWeight = FontWeight.SemiBold)         }
     }
-}
-
-private fun progressLabel(positionMs: Long, durationMs: Long): String {
-    if (durationMs <= 0) return "Reprise"
-    val pct = (positionMs * 100 / durationMs).coerceIn(0, 99)
-    return "Reprise · $pct%"
 }
