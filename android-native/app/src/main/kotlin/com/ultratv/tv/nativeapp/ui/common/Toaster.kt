@@ -17,7 +17,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
+import com.ultratv.tv.nativeapp.ui.common.safeBottomPadding
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -61,7 +63,12 @@ fun ToasterHost() {
         }
     }
 
-    Box(Modifier.fillMaxSize().padding(PaddingValues(bottom = 24.dp)), contentAlignment = Alignment.BottomCenter) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .padding(PaddingValues(bottom = safeBottomPadding(24.dp))),
+        contentAlignment = Alignment.BottomCenter,
+    ) {
         AnimatedVisibility(visible = msg != null, enter = fadeIn(), exit = fadeOut()) {
             val m = msg ?: return@AnimatedVisibility
             val (bg, fg) = when (m.kind) {

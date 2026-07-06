@@ -14,7 +14,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
+import com.ultratv.tv.nativeapp.ui.common.safeBottomPadding
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,7 +56,7 @@ fun BottomBarNav(navController: NavController) {
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
             .horizontalScroll(rememberScrollState())
-            .padding(PaddingValues(horizontal = 6.dp, vertical = 6.dp)),
+            .padding(PaddingValues(start = 6.dp, end = 6.dp, top = 6.dp, bottom = 6.dp + safeBottomPadding())),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

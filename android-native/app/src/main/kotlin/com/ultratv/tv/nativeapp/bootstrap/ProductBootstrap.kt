@@ -30,19 +30,30 @@ class ProductBootstrap @Inject constructor(
 
         return runCatching {
             applyDefaults(onProgress)
-            val preset = IptvOrgCatalog.presets.first { it.id == ProductConfig.DEFAULT_IPTV_ORG_PRESET_ID }
-            onProgress("Добавление ${preset.nameRu}…")
-            val id = providers.addM3u(
-                name = "${preset.emoji} iptv-org · ${preset.nameRu}",
-                url = preset.playlistUrl,
-                epgUrl = preset.epgUrl,
-            )
-            providers.setDefault(id)
-            onProgress("Загрузка каналов…")
-            providers.syncAll(id) { onProgress(it) }
-            if (preset.epgUrl.isNotBlank()) {
+            val presetIds = listOf(ProductConfig.DEFAULT_IPTV_ORG_PRESET_ID) +
+                ProductConfig.BOOTSTRAP_EXTRA_PRESET_IDS
+            var defaultId: Long? = null
+            for (presetId in presetIds.distinct()) {
+                val preset = IptvOrgCatalog.presets.firstOrNull { it.id == presetId } ?: continue
+                onProgress("Добавление ${preset.nameRu}…")
+                val id = providers.addM3u(
+                    name = "${preset.emoji} iptv-org · ${preset.nameRu}",
+                    url = preset.playlistUrl,
+                    epgUrl = preset.epgUrl,
+                )
+                if (defaultId == null) {
+                    defaultId = id
+                    providers.setDefault(id)
+                }
+                onProgress("Загрузка каналов · ${preset.nameRu}…")
+                providers.syncAll(id) { onProgress(it) }
+            }
+            val mainPreset = IptvOrgCatalog.presets.first {
+                it.id == ProductConfig.DEFAULT_IPTV_ORG_PRESET_ID
+            }
+            if (mainPreset.epgUrl.isNotBlank() && defaultId != null) {
                 onProgress("Загрузка телепрограммы…")
-                providers.syncXmltv(id) { onProgress(it) }
+                providers.syncXmltv(defaultId) { onProgress(it) }
             }
             prefs.markOnboardingSeen()
             prefs.setLastSyncAt(System.currentTimeMillis())

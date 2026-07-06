@@ -37,6 +37,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.ultratv.tv.nativeapp.i18n.LocalStrings
+import com.ultratv.tv.nativeapp.ui.common.safeBottomPadding
 import com.ultratv.tv.nativeapp.ui.theme.UltraTokens
 import com.ultratv.tv.nativeapp.ui.theme.UltraType
 
@@ -90,7 +91,7 @@ fun SidebarNav(navController: NavController) {
             )
             .onFocusChanged { anyFocused = it.hasFocus }
             .verticalScroll(rememberScrollState())
-            .padding(top = 40.dp, bottom = 30.dp),
+            .padding(top = 40.dp, bottom = 30.dp + safeBottomPadding()),
         verticalArrangement = Arrangement.Top,
     ) {
         // Logo

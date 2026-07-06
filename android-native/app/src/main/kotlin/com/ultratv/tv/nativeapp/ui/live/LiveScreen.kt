@@ -83,6 +83,7 @@ fun LiveScreen(onPlay: (url: String, title: String) -> Unit, vm: LiveViewModel =
     // Currently focused channel for the preview pane (defaults to the first one).
     var activeIdx by remember(chans.size) { mutableStateOf(0) }
     val S = com.ultratv.tv.nativeapp.i18n.LocalStrings.current
+    val ruUi = S.navHome == "Главная"
 
     Row(Modifier.fillMaxSize().padding(top = 76.dp)) {
         // ---- Left pane: categories (200 dp — compact, focus-only) ----
@@ -105,14 +106,14 @@ fun LiveScreen(onPlay: (url: String, title: String) -> Unit, vm: LiveViewModel =
             LazyColumn(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 item("__all__") {
                     CategoryRow(
-                        label = "All channels",
+                        label = S.liveAllChannels,
                         selected = selected == CATEGORY_ALL,
                         onClick = { vm.selectCategory(CATEGORY_ALL) },
                     )
                 }
                 items(cats, key = { it.id }) { cat ->
                     CategoryRow(
-                        label = prettyCategoryName(cat.name) + if (cat.locked) "  🔒" else "",
+                        label = com.ultratv.tv.nativeapp.ui.common.displayCategoryName(cat.name, ruUi) + if (cat.locked) "  🔒" else "",
                         selected = selected == cat.remoteId,
                         onClick = { vm.selectCategory(cat.remoteId) },
                     )
@@ -138,7 +139,10 @@ fun LiveScreen(onPlay: (url: String, title: String) -> Unit, vm: LiveViewModel =
             verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
             val title = if (selected == CATEGORY_ALL) S.liveAllChannels
-            else prettyCategoryName(cats.firstOrNull { it.remoteId == selected }?.name ?: "")
+            else com.ultratv.tv.nativeapp.ui.common.displayCategoryName(
+                cats.firstOrNull { it.remoteId == selected }?.name ?: "",
+                ruUi,
+            )
             Row(
                 modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -152,7 +156,7 @@ fun LiveScreen(onPlay: (url: String, title: String) -> Unit, vm: LiveViewModel =
                     fontWeight = FontWeight.Medium,
                 )
                 Text(
-                    "${chans.size} chaînes",
+                    S.liveChannelsCountTemplate.format(chans.size),
                     fontFamily = UltraFonts.Mono,
                     fontSize = 11.sp,
                     color = UltraTokens.Fg4,

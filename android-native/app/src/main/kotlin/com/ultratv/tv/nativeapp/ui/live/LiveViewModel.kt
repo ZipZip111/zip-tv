@@ -7,6 +7,7 @@ import com.ultratv.tv.nativeapp.data.db.ChannelEntity
 import com.ultratv.tv.nativeapp.data.prefs.HiddenCategoriesStore
 import com.ultratv.tv.nativeapp.data.prefs.LockedChannelsStore
 import com.ultratv.tv.nativeapp.data.repo.CatalogRepository
+import com.ultratv.tv.nativeapp.data.repo.ChannelPlayback
 import com.ultratv.tv.nativeapp.data.repo.PlaybackContext
 import com.ultratv.tv.nativeapp.data.repo.ProviderRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -39,6 +40,7 @@ class LiveViewModel @Inject constructor(
     private val hiddenStore: HiddenCategoriesStore,
     private val lockedStore: LockedChannelsStore,
     private val playback: PlaybackContext,
+    private val channelPlayback: ChannelPlayback,
     private val epgDaoArg: com.ultratv.tv.nativeapp.data.db.EpgDao,
     private val zapQueue: com.ultratv.tv.nativeapp.data.repo.LivePlaybackQueue,
     private val reminders: com.ultratv.tv.nativeapp.data.reminders.RemindersScheduler,
@@ -253,29 +255,17 @@ class LiveViewModel @Inject constructor(
     }
 
     fun resolveAndPlay(channel: ChannelEntity, onReady: (url: String, title: String) -> Unit) {
-        // Seed the zap queue with the list the user was browsing so the
-        // player can D-pad UP/DOWN through it without going back.
         zapQueue.set(channels.value, channel)
-        fun register(url: String) {
-            playback.set(PlaybackContext.Item(
-                providerId = channel.providerId,
-                kind = "LIVE",
-                remoteId = channel.remoteId,
-                title = channel.name,
-                poster = channel.logo,
-                streamUrl = url,
-            ))
-        }
         if (!channel.streamUrl.startsWith("stalker://")) {
-            register(channel.streamUrl)
+            channelPlayback.register(channel, channel.streamUrl)
             onReady(channel.streamUrl, channel.name)
             return
         }
         viewModelScope.launch {
             _resolving.value = true
             try {
-                val resolved = provider.resolvePlayUrl(channel.id, channel.streamUrl)
-                register(resolved)
+                val resolved = channelPlayback.resolveUrl(channel.id, channel.streamUrl)
+                channelPlayback.register(channel, resolved)
                 onReady(resolved, channel.name)
             } finally {
                 _resolving.value = false

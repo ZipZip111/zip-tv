@@ -4,13 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ultratv.tv.nativeapp.data.config.DeviceMac
 import com.ultratv.tv.nativeapp.data.db.ChannelEntity
+import com.ultratv.tv.nativeapp.data.repo.ChannelPlayback
+import com.ultratv.tv.nativeapp.data.repo.PlaybackContext
 import com.ultratv.tv.nativeapp.data.db.MovieEntity
 import com.ultratv.tv.nativeapp.data.db.ProviderEntity
 import com.ultratv.tv.nativeapp.data.db.SeriesEntity
 import com.ultratv.tv.nativeapp.data.db.WatchHistoryEntity
 import com.ultratv.tv.nativeapp.data.repo.CatalogRepository
 import com.ultratv.tv.nativeapp.data.repo.HistoryRepository
-import com.ultratv.tv.nativeapp.data.repo.PlaybackContext
 import com.ultratv.tv.nativeapp.data.repo.ProviderRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,6 +33,7 @@ class HomeViewModel @Inject constructor(
     private val catalog: CatalogRepository,
     private val history: HistoryRepository,
     private val deviceMac: DeviceMac,
+    private val channelPlayback: ChannelPlayback,
     private val playback: PlaybackContext,
 ) : ViewModel() {
 
@@ -61,6 +63,38 @@ class HomeViewModel @Inject constructor(
     val featuredChannels: StateFlow<List<ChannelEntity>> = pid
         .flatMapLatest { id -> if (id == null) flowOf(emptyList()) else catalog.channels(id).map { l -> l.take(30) } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Live movie channels from iptv-org «Кино» playlist (M3U has no VOD). */
+    val movieChannels: StateFlow<List<ChannelEntity>> = provider.observeProviders()
+        .flatMapLatest { ps ->
+            val moviePid = ps.firstOrNull { p ->
+                p.baseUrl.contains("categories/movies") ||
+                    p.name.contains("Кино", ignoreCase = true) ||
+                    p.name.contains("Movies", ignoreCase = true)
+            }?.id
+            if (moviePid == null) flowOf(emptyList())
+            else catalog.channels(moviePid)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val channelCount: StateFlow<Int> = pid
+        .flatMapLatest { id ->
+            if (id == null) flowOf(0) else catalog.channels(id).map { it.size }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+    fun playChannel(channel: ChannelEntity, onReady: (url: String, title: String) -> Unit) {
+        if (!channel.streamUrl.startsWith("stalker://")) {
+            channelPlayback.register(channel, channel.streamUrl)
+            onReady(channel.streamUrl, channel.name)
+            return
+        }
+        viewModelScope.launch {
+            val resolved = channelPlayback.resolveUrl(channel.id, channel.streamUrl)
+            channelPlayback.register(channel, resolved)
+            onReady(resolved, channel.name)
+        }
+    }
 
     /** Sets the playback context from a history entry so the player can record proper context. */
     fun playFromHistory(h: WatchHistoryEntity) {

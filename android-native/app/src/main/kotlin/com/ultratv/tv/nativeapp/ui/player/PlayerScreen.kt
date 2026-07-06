@@ -266,6 +266,10 @@ fun PlayerScreen(url: String, title: String, onBack: () -> Unit, vm: PlayerViewM
         // — that crashed HTTP playback. The RoutingDataSource below owns
         // the backing instance for the whole open-read-close cycle.
         val httpFactory = androidx.media3.datasource.DefaultHttpDataSource.Factory()
+            .setUserAgent("Mozilla/5.0 (Linux; Android 10; Zip-TV) AppleWebKit/537.36")
+            .setAllowCrossProtocolRedirects(true)
+            .setConnectTimeoutMs(20_000)
+            .setReadTimeoutMs(20_000)
         val defaultFactory = androidx.media3.datasource.DefaultDataSource.Factory(context, httpFactory)
         val rtmpFactory = androidx.media3.datasource.rtmp.RtmpDataSource.Factory()
         val routingFactory = androidx.media3.datasource.DataSource.Factory {
@@ -320,6 +324,9 @@ fun PlayerScreen(url: String, title: String, onBack: () -> Unit, vm: PlayerViewM
                     com.ultratv.tv.nativeapp.RemoteLog.error(
                         "player",
                         "code=${error.errorCodeName} ${error.message ?: ""}",
+                    )
+                    com.ultratv.tv.nativeapp.ui.common.Toaster.err(
+                        "Ошибка воспроизведения: ${error.errorCodeName}",
                     )
                 }
                 override fun onVideoSizeChanged(videoSize: androidx.media3.common.VideoSize) {

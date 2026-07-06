@@ -3,7 +3,9 @@ package com.ultratv.tv.nativeapp.ui.movies
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ultratv.tv.nativeapp.data.db.CategoryEntity
+import com.ultratv.tv.nativeapp.data.db.ChannelEntity
 import com.ultratv.tv.nativeapp.data.db.MovieEntity
+import com.ultratv.tv.nativeapp.data.repo.ChannelPlayback
 import com.ultratv.tv.nativeapp.data.prefs.HiddenCategoriesStore
 import com.ultratv.tv.nativeapp.data.repo.CatalogRepository
 import com.ultratv.tv.nativeapp.data.repo.ProviderRepository
@@ -37,6 +39,7 @@ class MoviesViewModel @Inject constructor(
     private val catalog: CatalogRepository,
     private val hiddenStore: HiddenCategoriesStore,
     private val movieDao: com.ultratv.tv.nativeapp.data.db.MovieDao,
+    private val channelPlayback: ChannelPlayback,
 ) : ViewModel() {
 
     private val _refreshing = MutableStateFlow(false)
@@ -120,6 +123,32 @@ class MoviesViewModel @Inject constructor(
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** iptv-org «Кино» — live movie channels when no Xtream VOD is available. */
+    val liveMovieChannels: StateFlow<List<ChannelEntity>> = providers
+        .flatMapLatest { ps ->
+            val moviePid = ps.firstOrNull { p ->
+                p.baseUrl.contains("categories/movies") ||
+                    p.name.contains("Кино", ignoreCase = true) ||
+                    p.name.contains("Movies", ignoreCase = true)
+            }?.id
+            if (moviePid == null) flowOf(emptyList())
+            else catalog.channels(moviePid)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun playLiveChannel(channel: ChannelEntity, onReady: (url: String, title: String) -> Unit) {
+        if (!channel.streamUrl.startsWith("stalker://")) {
+            channelPlayback.register(channel, channel.streamUrl)
+            onReady(channel.streamUrl, channel.name)
+            return
+        }
+        viewModelScope.launch {
+            val resolved = channelPlayback.resolveUrl(channel.id, channel.streamUrl)
+            channelPlayback.register(channel, resolved)
+            onReady(resolved, channel.name)
+        }
+    }
 
     val featured: StateFlow<MovieEntity?> = movies
         .map { list ->

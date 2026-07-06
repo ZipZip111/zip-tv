@@ -24,6 +24,8 @@ fun CategoryChips(
     selected: String?,
     onSelect: (String?) -> Unit,
 ) {
+    val S = com.ultratv.tv.nativeapp.i18n.LocalStrings.current
+    val ru = S.navHome == "Главная"
     Row(
         Modifier
             .fillMaxWidth()
@@ -31,10 +33,10 @@ fun CategoryChips(
             .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Chip(text = "All", on = selected == null) { onSelect(null) }
+        Chip(text = S.liveAllChannels, on = selected == null) { onSelect(null) }
         categories.forEach { cat ->
             Chip(
-                text = cat.name + if (cat.locked) " 🔒" else "",
+                text = displayCategoryName(cat.name, ru) + if (cat.locked) " 🔒" else "",
                 on = selected == cat.remoteId,
             ) { onSelect(cat.remoteId) }
         }

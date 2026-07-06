@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -59,9 +60,14 @@ fun HomeScreen(
     val movies by vm.featuredMovies.collectAsState()
     val series by vm.featuredSeries.collectAsState()
     val channels by vm.featuredChannels.collectAsState()
+    val movieChannels by vm.movieChannels.collectAsState()
+    val channelCount by vm.channelCount.collectAsState()
 
     var actionsFor by remember { mutableStateOf<com.ultratv.tv.nativeapp.data.db.WatchHistoryEntity?>(null) }
     val S = com.ultratv.tv.nativeapp.i18n.LocalStrings.current
+    val playChannel: (com.ultratv.tv.nativeapp.data.db.ChannelEntity) -> Unit = { c ->
+        vm.playChannel(c) { url, title -> onPlay(url, title) }
+    }
 
     Column(
         Modifier
@@ -71,8 +77,9 @@ fun HomeScreen(
     ) {
         // ---- HERO ----
         val heroItem = series.firstOrNull() ?: movies.firstOrNull()
-        if (heroItem != null) {
-            HeroBanner(
+        val heroChannel = channels.firstOrNull()
+        when {
+            heroItem != null -> HeroBanner(
                 eyebrow = S.homeHeroEyebrow,
                 title = (heroItem as? com.ultratv.tv.nativeapp.data.db.SeriesEntity)?.name
                     ?: (heroItem as? com.ultratv.tv.nativeapp.data.db.MovieEntity)?.name
@@ -84,7 +91,7 @@ fun HomeScreen(
                 meta = listOf("2025", "UHD · Dolby Vision", "Multi-pistes"),
                 synopsis = null,
                 cast = null,
-                primaryLabel = S.live + " · Reprendre",
+                primaryLabel = S.play,
                 onPrimary = {
                     when (heroItem) {
                         is com.ultratv.tv.nativeapp.data.db.SeriesEntity -> onOpenSeries(heroItem.id)
@@ -115,28 +122,33 @@ fun HomeScreen(
                     )
                 }) else null,
             )
-        } else {
-            // Welcome state — no providers yet
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(start = UltraTokens.EdgeGutter, top = 60.dp, end = UltraTokens.EdgeGutter),
-            ) {
-                Text(
-                    S.homeWelcomeHero,
-                    fontFamily = UltraFonts.Serif,
-                    fontSize = 84.sp,
-                    lineHeight = 84.sp,
-                    letterSpacing = (-2.1).sp,
-                    color = UltraTokens.Fg,
-                )
-                Spacer(Modifier.height(18.dp))
-                Text(
-                    S.homeWelcome,
-                    color = UltraTokens.Fg2,
-                    fontSize = 18.sp,
-                )
-            }
+            heroChannel != null -> HeroBanner(
+                eyebrow = "Zip-TV · ${S.homeSubtitle}",
+                title = heroChannel.name,
+                subtitle = if (channelCount > 0) S.liveChannelsCountTemplate.format(channelCount) else S.homeWelcome,
+                image = heroChannel.logo,
+                primaryLabel = "▶  ${S.homeGoLive}",
+                onPrimary = { playChannel(heroChannel) },
+                secondaryLabel = S.navMovies,
+                onSecondary = onGoMovies,
+                rightContent = if (channels.size > 1) ({
+                    com.ultratv.tv.nativeapp.ui.common.NowPlayingMiniColumn(
+                        items = channels.take(4).mapIndexed { idx, c ->
+                            com.ultratv.tv.nativeapp.ui.common.NowPlayingItem(
+                                channelNumber = idx + 1,
+                                channelName = c.name,
+                                channelLogoUrl = c.logo,
+                                channelShort = null,
+                                hueSeed = c.name.hashCode(),
+                                hd = null,
+                                nowTitle = S.homeOnNow,
+                                endsInMinutes = 30,
+                            )
+                        },
+                    )
+                }) else null,
+            )
+            else -> ZipWelcomeHero(S = S, onGoLive = onGoLive, onGoMovies = onGoMovies, onGoSettings = onGoSettings)
         }
 
         Spacer(Modifier.height(20.dp))
@@ -263,7 +275,24 @@ fun HomeScreen(
                     poster = c.logo,
                     subtitle = S.live,
                     aspect = 16f / 9f,
-                ) { onPlay(c.streamUrl, c.name) }
+                ) { playChannel(c) }
+            }
+        }
+
+        if (movieChannels.isNotEmpty()) {
+            ContentRail(
+                title = S.homeFeaturedMovies,
+                eyebrow = S.homeCinemaEyebrow,
+                items = movieChannels.take(20),
+                itemKey = { it.id },
+                cardWidth = 260.dp,
+            ) { c ->
+                PosterCard(
+                    title = c.name,
+                    poster = c.logo,
+                    subtitle = S.live,
+                    aspect = 16f / 9f,
+                ) { playChannel(c) }
             }
         }
         Spacer(Modifier.height(40.dp))
@@ -331,6 +360,65 @@ private fun ContinueActions(
                     onClick = onCancel,
                     colors = ButtonDefaults.colors(containerColor = Color.Transparent),
                 ) { Text(S.cancel, color = UltraTokens.Fg3) }
+            }
+        }
+    }
+}
+
+@OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
+@Composable
+private fun ZipWelcomeHero(
+    S: com.ultratv.tv.nativeapp.i18n.Strings,
+    onGoLive: () -> Unit,
+    onGoMovies: () -> Unit,
+    onGoSettings: () -> Unit,
+) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = UltraTokens.EdgeGutter, vertical = 48.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .background(
+                Brush.linearGradient(
+                    listOf(UltraTokens.AccentTint, UltraTokens.Surface1, UltraTokens.AccentGhost),
+                ),
+            )
+            .border(1.dp, UltraTokens.AccentBorder, RoundedCornerShape(24.dp))
+            .padding(36.dp),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Box(
+                    Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Brush.linearGradient(listOf(UltraTokens.Accent, UltraTokens.Accent2))),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("Z", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = UltraTokens.CtaFgOnCta)
+                }
+                Column {
+                    Text("Zip-TV", fontFamily = UltraFonts.Serif, fontSize = 42.sp, color = UltraTokens.Fg)
+                    Text(S.homeSubtitle, color = UltraTokens.Accent, fontSize = 14.sp)
+                }
+            }
+            Text(S.homeWelcome, color = UltraTokens.Fg2, fontSize = 18.sp, lineHeight = 26.sp)
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(
+                    onClick = onGoLive,
+                    colors = ButtonDefaults.colors(
+                        containerColor = UltraTokens.CtaBg,
+                        contentColor = UltraTokens.CtaFgOnCta,
+                    ),
+                ) { Text("▶  ${S.homeGoLive}", fontWeight = FontWeight.SemiBold) }
+                Button(
+                    onClick = onGoMovies,
+                    colors = ButtonDefaults.colors(containerColor = UltraTokens.Surface2),
+                ) { Text(S.navMovies, color = UltraTokens.Fg2) }
+                Button(
+                    onClick = onGoSettings,
+                    colors = ButtonDefaults.colors(containerColor = UltraTokens.Surface2),
+                ) { Text(S.onboardingOpenSettings, color = UltraTokens.Fg3) }
             }
         }
     }

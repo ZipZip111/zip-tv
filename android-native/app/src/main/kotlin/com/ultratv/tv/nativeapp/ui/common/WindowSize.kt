@@ -1,24 +1,29 @@
 package com.ultratv.tv.nativeapp.ui.common
 
+import android.content.pm.PackageManager
+import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 
 /** Three-bucket form-factor used by the adaptive nav / layout switches. */
 enum class FormFactor { Compact, Medium, Expanded }
 
+@Composable
+fun rememberIsTelevision(): Boolean {
+    val ctx = LocalContext.current
+    val uiMode = LocalConfiguration.current.uiMode and Configuration.UI_MODE_TYPE_MASK
+    return uiMode == Configuration.UI_MODE_TYPE_TELEVISION ||
+        ctx.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+}
+
 /**
- * Reads the current width and maps it to Material 3 window-size buckets.
- *
- *  - Compact  <  600 dp → phone portrait or split-screen — bottom-bar nav
- *  - Medium   <  840 dp → phone landscape / tablet portrait — top-bar or nav rail
- *  - Expanded ≥  840 dp → tablet landscape / TV — left sidebar
- *
- * We read the configuration directly rather than pulling in the
- * material3-window-size-class artifact: one less dependency, the bucketing
- * is trivial.
+ * Maps width (+ Android TV) to layout bucket.
+ * TV boxes / leanback always use sidebar layout regardless of reported width.
  */
 @Composable
 fun rememberFormFactor(): FormFactor {
+    if (rememberIsTelevision()) return FormFactor.Expanded
     val w = LocalConfiguration.current.screenWidthDp
     return when {
         w < 600 -> FormFactor.Compact

@@ -36,6 +36,7 @@ import com.ultratv.tv.nativeapp.data.sync.SyncScheduler
 import com.ultratv.tv.nativeapp.nav.Routes
 import com.ultratv.tv.nativeapp.ui.AppViewModel
 import com.ultratv.tv.nativeapp.ui.categories.CategoriesScreen
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.ultratv.tv.nativeapp.ui.common.FormFactor
 import com.ultratv.tv.nativeapp.ui.common.rememberFormFactor
 import com.ultratv.tv.nativeapp.ui.components.BottomBarNav
@@ -205,9 +206,11 @@ private fun Root(vm: AppViewModel = hiltViewModel()) {
 private fun UltraTvAppRoot(sidebarPosition: SidebarPosition) {
     val nav = rememberNavController()
     val form = rememberFormFactor()
+    val navRoute = nav.currentBackStackEntryAsState().value?.destination?.route.orEmpty()
+    val hideChrome = navRoute.startsWith("player")
     // Effective nav style: phone-portrait collapses to a bottom bar regardless
     // of the user's "sidebar / top bar" preference, otherwise we honour it.
-    val useBottomBar = form == FormFactor.Compact
+    val useBottomBar = form == FormFactor.Compact && !hideChrome
     val useTopBar = !useBottomBar && (sidebarPosition == SidebarPosition.TOP || form == FormFactor.Medium)
 
     // One-shot: as soon as we have a NavController, consume any pending
@@ -225,6 +228,11 @@ private fun UltraTvAppRoot(sidebarPosition: SidebarPosition) {
     ) {
         androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
         when {
+            hideChrome -> Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
+            ) { NavGraph(nav) }
             useBottomBar -> Column(Modifier.fillMaxSize()) {
                 com.ultratv.tv.nativeapp.ui.common.SyncStatusBanner()
                 Box(
@@ -289,7 +297,10 @@ private fun NavGraph(nav: androidx.navigation.NavHostController) {
             LiveScreen(onPlay = { url, title -> nav.navigate(Routes.player(url, title)) })
         }
         composable(Routes.MOVIES) {
-            MoviesScreen(onOpen = { id -> nav.navigate(Routes.movieDetail(id)) })
+            MoviesScreen(
+                onOpen = { id -> nav.navigate(Routes.movieDetail(id)) },
+                onPlayLive = { url, title -> nav.navigate(Routes.player(url, title)) },
+            )
         }
         composable(
             Routes.MOVIE_DETAIL,

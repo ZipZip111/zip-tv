@@ -14,6 +14,9 @@ object ProductConfig {
     const val DEFAULT_LANGUAGE = "ru"
     const val DEFAULT_IPTV_ORG_PRESET_ID = "ru"
 
+    /** Extra iptv-org playlists added on first launch (live movie/series channels). */
+    val BOOTSTRAP_EXTRA_PRESET_IDS = listOf("movies", "series")
+
     /** Disable outbound crash telemetry by default for Zip-TV installs. */
     const val DEFAULT_TELEMETRY = false
 }
